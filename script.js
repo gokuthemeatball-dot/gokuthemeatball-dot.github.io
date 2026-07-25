@@ -178,6 +178,7 @@ let gestureTapTimer = null;
 let gestureRunArmedUntil = 0;
 let activeGesturePointers = new Set();
 let twoFingerTouch = false;
+let threeFingerTouch = false;
 let twoFingerTapCount = 0;
 let twoFingerTapTimer = null;
 let storyGestureStart = null;
@@ -211,13 +212,13 @@ const spanishExact = {
   'Your energy is already full.':'Tu energía ya está llena.',
   'Noise lure deployed. Mr. Hollow turns toward the sound.':'Señuelo de ruido desplegado. El señor Hollow se dirige hacia el sonido.',
   'Door jammer placed here. Lead Mr. Hollow across this tile to stop him.':'Bloqueador colocado. Haz que el señor Hollow pase por aquí para detenerlo.',
-  'The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. Find the stockroom fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Tienes tres porciones de comida. Encuentra el fusible y escapa.',
+  'The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. First build the required guidance map, then find the fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Tienes tres porciones de comida. Primero construye el mapa de guía obligatorio, después encuentra el fusible y escapa.',
   'Crouched. You move quietly.':'Agachado. Te mueves en silencio.',
   'Standing.':'De pie.',
   'Game paused.':'Juego en pausa.',
   'Game resumed.':'Juego reanudado.',
   'Standard control layout active.':'Controles estándar activados.',
-  'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.':'Modo de gestos para jugadores ciegos activado. Ahora desactiva VoiceOver o TalkBack. Desliza y mantén para caminar. Toca una vez y después desliza hacia arriba y mantén para correr. Toca dos veces para interactuar, tres veces para la linterna, una vez con dos dedos para agacharte y dos veces con dos dedos para comer.',
+  'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.':'Modo de gestos para jugadores ciegos activado. Ahora desactiva VoiceOver o TalkBack. Desliza y mantén para caminar. Toca una vez y después desliza hacia arriba y mantén para correr. Toca dos veces para interactuar, tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.',
   'Blind gesture mode selected. Start the game first, then turn off VoiceOver or TalkBack when instructed.':'Modo de gestos para jugadores ciegos seleccionado. Primero inicia el juego y después desactiva VoiceOver o TalkBack cuando se te indique.',
   'Blind gesture mode selected. Double tap anywhere on the start screen to begin.':'Modo de gestos para jugadores ciegos seleccionado. Toca dos veces en cualquier parte de la pantalla de inicio para comenzar.',
   'Running forward.':'Corriendo hacia adelante.',
@@ -366,6 +367,8 @@ function objective() {
   if (phase === 'cleaning') return `Clean the marked spills. ${cleaningSpots.length-cleanedSpots.size} remaining.`;
   const lostMemories=memorySideTaskActive?memoryFragments.filter(fragment=>!fragment.recovered).length:0;
   if(lostMemories>0)return `Recover your lost memories before escaping. ${lostMemories} remaining.`;
+  if(!hasPaper)return 'Find the store plan. The map is required to survive the dark aisles.';
+  if(!hasMarker)return 'Find a marker and complete the required guidance map.';
   if (!hasFuse) return 'Find the stockroom fuse in the southwest corner.';
   if (!powerOn) return 'Install the fuse at the breaker beside you.';
   if (!hasKey) return 'Find the office keycard in the northeast corner.';
@@ -499,6 +502,16 @@ function moveFacing(backward = false, run = false) {
     movePlayer(dx,dy,false,3);
   }
 }
+function jumpForward(){
+  if(!running||paused||hidden)return;
+  if(phase==='escape'&&energy<5){announce('You need five energy to jump.',true);return;}
+  const vector=facingVectors[facing];
+  if(phase==='escape')energy=Math.max(0,energy-5);
+  noiseTurns=5;
+  noiseBurst(.18,.09,0);tone(82,.12,0);
+  movePlayer(vector.x,vector.y,false,0);
+  announce('Jumped forward. The landing was loud.',blindMode);
+}
 
 function describeTile() {
   const nearby = nearestImportant();
@@ -606,7 +619,9 @@ function interact() {
     draw();
     return;
   }
-  if (!hasFuse && manhattan(player,fuse) <= 1) {
+  if (!hasMap && manhattan(player,fuse) <= 1) {
+    announce('The dark stockroom is impossible to navigate safely without the guidance map. Find the store plan and marker first.',true);
+  } else if (!hasFuse && manhattan(player,fuse) <= 1) {
     hasFuse = true;
     announce('Fuse collected. Install it at the breaker here by pressing E again.', true);
   } else if (hasFuse && !powerOn && manhattan(player,fuse) <= 1) {
@@ -872,7 +887,7 @@ function drawMarker(point,color,label){
 function areaName(p){if(p.y<=3)return p.x>=23?'Manager office hall':'Front checkout';if(p.y>=15)return p.x<=9?'Stockroom':p.x>=23?'Loading bay':'Back aisle';return `Aisle ${Math.max(1,Math.floor(p.x/2))}`;}
 function directionWords(dx,dy){const vertical=dy<0?'north':dy>0?'south':'';const horizontal=dx<0?'west':dx>0?'east':'';return vertical&&horizontal?`${vertical}-${horizontal}`:vertical||horizontal||'here';}
 function manhattan(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
-function currentGoal(){return !hasFuse||!powerOn?fuse:!hasKey?keycard:exit;}
+function currentGoal(){return !hasPaper?paperSpot:!hasMarker?markerSpot:!hasFuse||!powerOn?fuse:!hasKey?keycard:exit;}
 
 function ensureAudio(){
   if(audioContext)return;
@@ -902,13 +917,25 @@ function bossFootstepSound(distance,dx){
   if(!soundToggle.checked||distance>14)return;
   const pan=Math.max(-1,Math.min(1,dx/6));
   const closeness=Math.max(0,1-distance/15);
-  noiseBurst(.13,.025+closeness*.065,pan);
-  tone(48+Math.random()*8,.13+closeness*.07,pan);
-  setTimeout(()=>{noiseBurst(.055,.018+closeness*.038,pan);tone(72,.045,pan);},85);
+  const closeImpact=distance<=3?.11:distance<=6?.07:0;
+  noiseBurst(.17,.03+closeness*.1+closeImpact,pan);
+  tone(42+Math.random()*7,.18+closeness*.11,pan);
+  setTimeout(()=>{noiseBurst(.09,.025+closeness*.065+closeImpact*.5,pan);tone(distance<=3?54:68,.07,pan);},95);
+  if(distance<=3)setTimeout(()=>{noiseBurst(.12,.1,pan);tone(34,.16,pan);},165);
   if(distance<=6)setTimeout(()=>keyRattle(dx),150);
 }
 function cleaningSound(){noiseBurst(.38,.045,0);tone(540,.12,-.2);setTimeout(()=>noiseBurst(.28,.035,.2),150);setTimeout(()=>tone(880,.11,0),310);}
 function flashlightSound(){noiseBurst(.025,.06,0);tone(flashlight?1250:480,.035,0);setTimeout(()=>tone(flashlight?760:260,.045,0),38);}
+function toggleFlashlight(){
+  flashlight=!flashlight;
+  flashlightSound();
+  if(flashlight&&phase==='escape'&&manhattan(player,boss)<=3){
+    bossStunnedUntil=Math.max(bossStunnedUntil,performance.now()+1600);
+    announce('The beam catches Mr. Hollow’s eyes. He recoils, but now he knows your position.',true);
+    noiseTurns=5;
+  }else announce(`Flashlight ${flashlight?'on. It reveals dark halls but makes you easier to see.':'off. You are harder to see, but the halls are nearly black.'}`,true);
+  draw();
+}
 function eatSound(){noiseBurst(.16,.045,0);tone(330,.08,0);setTimeout(()=>tone(440,.12,0),120);}
 function heartbeatSound(distance){tone(54,.08,0);setTimeout(()=>tone(47,.1,0),120+distance*18);}
 function pickupSound(){tone(720,.06,-.2);setTimeout(()=>tone(980,.09,.2),70);}
@@ -933,7 +960,7 @@ function eatCarriedFood(){
 }
 function useMap(){
   if(!hasMap){announce('Craft a map by collecting the store plan and marker.',false);return;}
-  const goal=currentGoal();showMapUntil=performance.now()+9000;announce(`Map route: ${directionWords(goal.x-player.x,goal.y-player.y)}, ${manhattan(player,goal)} steps.`,true);tone(620,.12,goal.x-player.x);draw();
+  const goal=currentGoal();showMapUntil=performance.now()+12000;announce(`Required map guidance: face ${directionWords(goal.x-player.x,goal.y-player.y)}. Your next objective is ${manhattan(player,goal)} steps away. Listen again whenever you become lost.`,true);tone(620,.12,goal.x-player.x);draw();
 }
 function useLure(){
   if(!hasLure){announce('Craft a noise lure from an empty can and batteries.',false);return;}
@@ -975,7 +1002,7 @@ function useScentMask(){
 }
 function gestureItems(){
   return [
-    {name:language==='es'?'linterna':'flashlight',available:()=>true,use:()=>{flashlight=!flashlight;announce(`Flashlight ${flashlight?'on':'off'}.`,true);flashlightSound();draw();}},
+    {name:language==='es'?'linterna':'flashlight',available:()=>true,use:toggleFlashlight},
     {name:language==='es'?'brújula de audio':'audio compass',available:()=>true,use:audioCompass},
     {name:language==='es'?'comida':'food',available:()=>foodPortions>0,use:eatCarriedFood},
     {name:language==='es'?'mapa':'map',available:()=>hasMap,use:useMap},
@@ -1038,6 +1065,13 @@ gesturePad.addEventListener('pointerdown',event=>{
   event.preventDefault();
   gesturePad.setPointerCapture?.(event.pointerId);
   activeGesturePointers.add(event.pointerId);
+  if(activeGesturePointers.size>=3){
+    threeFingerTouch=true;
+    twoFingerTouch=false;
+    stopGestureHold();
+    gestureStart=null;
+    return;
+  }
   if(activeGesturePointers.size>=2){
     twoFingerTouch=true;
     stopGestureHold();
@@ -1081,10 +1115,7 @@ function registerSimpleGestureTap(){
     gestureTapTimer=setTimeout(()=>{gestureTapCount=0;gestureRunArmedUntil=0;gestureTapTimer=null;interact();},360);
   }else{
     gestureTapCount=0;gestureRunArmedUntil=0;
-    flashlight=!flashlight;
-    announce(`Flashlight ${flashlight?'on':'off'}.`,true);
-    flashlightSound();
-    draw();
+    toggleFlashlight();
   }
 }
 function registerTwoFingerTap(){
@@ -1104,6 +1135,16 @@ function registerTwoFingerTap(){
 }
 function finishGesture(event){
   activeGesturePointers.delete(event.pointerId);
+  if(threeFingerTouch){
+    event.preventDefault();
+    if(activeGesturePointers.size===0){
+      threeFingerTouch=false;
+      twoFingerTouch=false;
+      gestureStart=null;gestureLast=null;gestureDirection='';gesturePattern='';
+      jumpForward();
+    }
+    return;
+  }
   if(twoFingerTouch){
     event.preventDefault();
     if(activeGesturePointers.size===0){
@@ -1372,7 +1413,7 @@ function beginHorror(){
     playLightsOutMusic();
     setTimeout(()=>tone(55,.7,0),430);
   },550);
-  announce('The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. Find the stockroom fuse and escape.',true);
+  announce('The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. First build the required guidance map, then find the fuse and escape.',true);
 }
 function tone(frequency,duration,pan=0){if(!soundToggle.checked)return;ensureAudio();const o=audioContext.createOscillator(),g=audioContext.createGain(),p=audioContext.createStereoPanner?audioContext.createStereoPanner():audioContext.createGain();o.frequency.value=frequency;o.type='triangle';g.gain.setValueAtTime(.055,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);if('pan'in p)p.pan.value=Math.max(-1,Math.min(1,pan));o.connect(g).connect(p).connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+duration);}
 function spatialCue(dx,frequency){tone(frequency,.13,Math.max(-1,Math.min(1,dx/5)));}
@@ -1385,9 +1426,10 @@ function triggerJumpScare(text='RUN.',force=false){
   document.querySelector('#jumpScareText').textContent=text;
   scare.hidden=false;
   document.body.classList.add('danger-flash');
-  noiseBurst(.42,.16,boss.x>player.x?1:-1);
-  [48,39,61,32].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.28,0),index*65));
-  setTimeout(()=>{scare.hidden=true;document.body.classList.remove('danger-flash');},force?760:420);
+  noiseBurst(.55,.22,boss.x>player.x?1:-1);
+  [48,31,67,26,43].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.32,0),index*58));
+  if(navigator.vibrate)navigator.vibrate(force?[120,45,180]:[80,35,110]);
+  setTimeout(()=>{scare.hidden=true;document.body.classList.remove('danger-flash');},force?900:560);
 }
 
 function fearEvent(time){
@@ -1409,6 +1451,7 @@ function fearEvent(time){
     const message=messages[Math.floor(Math.random()*messages.length)];
     noiseBurst(.32,.055,0);setTimeout(()=>announce(message,true),180);
   }
+  if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
 function gameLoop(time){bossStep(time);updateDangerMusic(time,manhattan(player,boss));fearEvent(time);requestAnimationFrame(gameLoop);}
@@ -1422,10 +1465,11 @@ window.addEventListener('keydown',event=>{
   if(code==='ArrowUp'){event.preventDefault();moveFacing(false,event.shiftKey);}
   else if(code==='ArrowDown'){event.preventDefault();moveFacing(true,false);}
   else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();turnPlayer(code==='ArrowLeft'?-1:1);}
-  else if(code==='KeyE'||code==='Space'){event.preventDefault();interact();}
+  else if(code==='KeyE'){event.preventDefault();interact();}
+  else if(code==='Space'||code==='KeyJ'){event.preventDefault();if(!event.repeat)jumpForward();}
   else if(code==='KeyC'){event.preventDefault();audioCompass();}
   else if(code==='KeyQ'){event.preventDefault();announce(objective(),true);}
-  else if(code==='KeyF'){event.preventDefault();flashlight=!flashlight;announce(`Flashlight ${flashlight?'on':'off'}.`,true);flashlightSound();draw();}
+  else if(code==='KeyF'){event.preventDefault();toggleFlashlight();}
   else if(code==='KeyB'){event.preventDefault();useStunBottle();}
   else if(code==='KeyR'){event.preventDefault();eatCarriedFood();}
   else if(code==='KeyM'){event.preventDefault();useMap();}
@@ -1445,8 +1489,9 @@ document.querySelectorAll('[data-move]').forEach(button=>button.addEventListener
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>{
   const action=button.dataset.action;
   if(action==='run')moveFacing(false,true);
+  else if(action==='jump')jumpForward();
   else if(action==='repeat')announce(objective(),true);
-  else if(action==='flashlight'){flashlight=!flashlight;announce(`Flashlight ${flashlight?'on':'off'}.`,true);flashlightSound();draw();}
+  else if(action==='flashlight')toggleFlashlight();
   else if(action==='crouch'&&!hidden){crouching=!crouching;announce(crouching?'Crouched. You move quietly.':'Standing.',true);draw();}
   else if(action==='compass')audioCompass();
   else if(action==='food')eatCarriedFood();
@@ -1499,7 +1544,7 @@ function startGame(){
   (blindMode?gesturePad:canvas).focus();
   tone(660,.09,0);setTimeout(()=>tone(880,.14,0),110);
   if(blindMode){
-    announce('Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.',true);
+    announce('Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.',true);
     setTimeout(startIntro,5200);
   }else startIntro();
 }
@@ -1524,8 +1569,8 @@ document.querySelector('#startModal').addEventListener('pointerup',event=>{
 document.querySelector('#restartButton').addEventListener('click',()=>{resetGame();startIntro();});
 document.querySelector('#accessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
 document.querySelector('#startAccessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
-document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active.',true);(blindMode&&running?gesturePad:canvas).focus();});
-document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
+document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active.',true);(blindMode&&running?gesturePad:canvas).focus();});
+document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
 window.addEventListener('beforeinstallprompt',event=>{
   event.preventDefault();
   deferredInstallPrompt=event;
