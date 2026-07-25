@@ -1030,10 +1030,9 @@ function beginGestureHold(direction){
   },340);
 }
 function orientedGestureDelta(dx,dy){
-  if(innerWidth<=innerHeight)return {dx,dy};
-  const angle=Number(screen.orientation?.angle ?? window.orientation ?? 90);
-  if(angle===270||angle===-90)return {dx:-dy,dy:dx};
-  return {dx:dy,dy:-dx};
+  // Blind gesture mode is played in landscape with the charging port on the right.
+  // Some mobile browsers keep reporting portrait pointer axes after fullscreen.
+  return {dx:-dy,dy:dx};
 }
 gesturePad.addEventListener('pointerdown',event=>{
   event.preventDefault();
