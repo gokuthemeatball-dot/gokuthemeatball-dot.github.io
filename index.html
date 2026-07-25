@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=32" />
-  <link rel="stylesheet" href="horror-mobile.css?v=83" />
+  <link rel="stylesheet" href="horror-mobile.css?v=84" />
   <style>.inventory div{flex-wrap:wrap}.inventory{max-width:65%}</style>
 </head>
 <body>
@@ -127,6 +127,17 @@
     <strong id="jumpScareText">RUN.</strong>
   </div>
 
+  <div class="modal battle-modal" id="battleModal" role="dialog" aria-modal="true" aria-labelledby="battleTitle" hidden>
+    <div class="modal-card battle-card">
+      <p class="kicker">MEMORY CONFRONTATION</p>
+      <h2 id="battleTitle">HE HAS YOU.</h2>
+      <p id="battleText">Mr. Hollow is dragging you toward the locked stockroom. Fight before the final lock turns.</p>
+      <strong id="battleProgress">BREAK FREE: 0 / 6</strong>
+      <button id="fightButton" type="button">FIGHT BACK <span>E · TAP</span></button>
+      <small>Press E or activate this button repeatedly. Blind gesture mode: double tap repeatedly.</small>
+    </div>
+  </div>
+
   <div class="modal" id="storyModal" role="dialog" aria-modal="true" aria-labelledby="storySpeaker" hidden>
     <div class="modal-card story-card">
       <img src="mr-hollow.jpg" alt="Mr. Hollow standing behind the supermarket service counter." />
@@ -181,6 +192,6 @@
   </div>
 
   <p id="liveRegion" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
-  <script src="script.js?v=83"></script>
+  <script src="script.js?v=84"></script>
 </body>
 </html>

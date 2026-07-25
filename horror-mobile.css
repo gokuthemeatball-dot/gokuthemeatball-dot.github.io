@@ -76,3 +76,9 @@
 @media(orientation:portrait){
   .screen-reader-controls .gesture-pad::before{content:"ROTATE DEVICE TO LANDSCAPE";position:absolute;top:18px;color:#ffc44a;font:700 11px "IBM Plex Mono";letter-spacing:.08em}
 }
+.battle-modal{background:radial-gradient(circle,#46030be8 0,#030000f5 62%);animation:battlePulse .75s infinite alternate}
+.battle-card{border-color:#ff414d;box-shadow:0 0 90px #b50027;text-align:center}
+.battle-card h2{color:#ff414d;text-shadow:0 0 22px #ff001f}
+.battle-card>strong{display:block;margin:18px 0;color:#fff;font-size:18px;letter-spacing:.08em}
+.battle-card button{background:#ff414d;color:#fff}
+@keyframes battlePulse{from{filter:brightness(.72)}to{filter:brightness(1.12)}}

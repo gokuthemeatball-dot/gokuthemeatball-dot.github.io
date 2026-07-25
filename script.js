@@ -189,6 +189,12 @@ let explorationFadeTimer;
 let explorationSegmentTimer;
 let memoryFragments;
 let memorySideTaskActive;
+let stolenMemories;
+let battleActive;
+let battleHits;
+let battleTimer;
+let battleLost;
+let nextExhaustedMoveAt;
 let audioContext;
 let ambientGain;
 let lastAnnouncement = '';
@@ -218,6 +224,9 @@ let storyGestureTapTimer = null;
 let startGestureStart = null;
 let startGestureTapCount = 0;
 let startGestureTapTimer = null;
+let battleGestureStart = null;
+let battleGestureTapCount = 0;
+let battleGestureTapTimer = null;
 let closeByWasNear = false;
 let bossWasVisible = false;
 
@@ -243,9 +252,12 @@ const spanishExact = {
   'You escaped Aisle 13. Shift survived.':'Escapaste del Pasillo 13. Sobreviviste al turno.',
   'No food remains in your pack.':'No queda comida en tu mochila.',
   'Your energy is already full.':'Tu energía ya está llena.',
+  'Energy empty. You can still move, but every step is painfully slow. Find food.':'Energía agotada. Todavía puedes moverte, pero cada paso será muy lento. Encuentra comida.',
   'Noise lure deployed. Mr. Hollow turns toward the sound.':'Señuelo de ruido desplegado. El señor Hollow se dirige hacia el sonido.',
   'Door jammer placed here. Lead Mr. Hollow across this tile to stop him.':'Bloqueador colocado. Haz que el señor Hollow pase por aquí para detenerlo.',
   'The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. First build the required guidance map, then find the fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Tienes tres porciones de comida. Primero construye el mapa de guía obligatorio, después encuentra el fusible y escapa.',
+  'The final spill is clean. The lights die. Mr. Hollow locks the doors. Your guidance map is already in your pocket, but you have no food. Find supplies, then use the map to reach the fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Ya tienes el mapa de guía, pero no tienes comida. Encuentra provisiones y usa el mapa para llegar al fusible y escapar.',
+  'Mr. Hollow locked you in the stockroom. Shift ended.':'El señor Hollow te encerró en el almacén. El turno terminó.',
   'Crouched. You move quietly.':'Agachado. Te mueves en silencio.',
   'Standing.':'De pie.',
   'Game paused.':'Juego en pausa.',
@@ -394,6 +406,13 @@ function resetGame() {
   explorationTrackActive = false;
   memoryFragments = [];
   memorySideTaskActive = false;
+  stolenMemories = 0;
+  battleActive = false;
+  battleHits = 0;
+  battleLost = false;
+  nextExhaustedMoveAt = 0;
+  if(battleTimer){clearTimeout(battleTimer);battleTimer=null;}
+  document.querySelector('#battleModal').hidden=true;
   closeByWasNear = false;
   bossWasVisible = false;
   powerOn = true;
@@ -410,8 +429,7 @@ function objective() {
   if (phase === 'cleaning') return `Clean the marked spills. ${cleaningSpots.length-cleanedSpots.size} remaining.`;
   const lostMemories=memorySideTaskActive?memoryFragments.filter(fragment=>!fragment.recovered).length:0;
   if(lostMemories>0)return `Recover your lost memories before escaping. ${lostMemories} remaining.`;
-  if(!hasPaper)return 'Find the store plan. The map is required to survive the dark aisles.';
-  if(!hasMarker)return 'Find a marker and complete the required guidance map.';
+  if(stolenMemories>0)return `Mr. Hollow carries ${stolenMemories} stolen memor${stolenMemories===1?'y':'ies'}. Survive until you can confront him.`;
   if (!hasFuse) return 'Find the stockroom fuse in the southwest corner.';
   if (!powerOn) return 'Install the fuse at the breaker beside you.';
   if (!hasKey) return 'Find the office keycard in the northeast corner.';
@@ -506,9 +524,15 @@ function updateHud() {
 }
 
 function movePlayer(dx, dy, quiet = false, energyCost = 1) {
-  if (!running || paused || hidden) return;
+  if (!running || paused || hidden || battleActive) return;
   const energyActive=phase==='escape';
-  if(energyActive&&energy<energyCost){announce('You are out of energy. Find food and press E to eat.',true);return;}
+  if(energyActive&&energy<=0){
+    const now=performance.now();
+    if(now<nextExhaustedMoveAt)return;
+    nextExhaustedMoveAt=now+1150;
+    energyCost=0;
+    announce('Energy empty. You can still move, but every step is painfully slow. Find food.',true);
+  }else if(energyActive&&energy<energyCost){energyCost=Math.max(0,energy);}
   const next = {x:player.x+dx,y:player.y+dy};
   if (walls.has(`${next.x},${next.y}`)) {
     announce('Blocked. A shelf or wall is in that direction.', blindMode);
@@ -538,7 +562,7 @@ function moveFacing(backward = false, run = false) {
   const vector = facingVectors[facing];
   const dx = vector.x * (backward ? -1 : 1);
   const dy = vector.y * (backward ? -1 : 1);
-  const actuallyRunning=run&&!crouching;
+  const actuallyRunning=run&&!crouching&&energy>0;
   movePlayer(dx,dy,crouching,actuallyRunning?3:1);
   if (actuallyRunning && running && !paused && !hidden) {
     noiseTurns = 5;
@@ -567,6 +591,7 @@ function describeTile() {
 }
 
 function interact() {
+  if(battleActive){fightBack();return;}
   if (!running || paused) return;
   if (phase === 'customers') {
     if(manhattan(player,checkoutSpot)<=1){
@@ -633,8 +658,6 @@ function interact() {
   if(phase==='escape'&&!hasCleaner&&manhattan(player,cleanerSpot)<=1){
     hasCleaner=true;pickupSound();announce('Cleaner collected. Find an empty bottle to craft a stun bottle.',false);tryCraft();updateHud();draw();return;
   }
-  if(phase==='escape'&&!hasPaper&&manhattan(player,paperSpot)<=1){hasPaper=true;pickupSound();announce('Store plan collected. Find a marker to finish the guidance map.',false);tryCraftMap();updateHud();draw();return;}
-  if(phase==='escape'&&!hasMarker&&manhattan(player,markerSpot)<=1){hasMarker=true;pickupSound();announce('Marker collected. Find the store plan to finish the guidance map.',false);tryCraftMap();updateHud();draw();return;}
   if(phase==='escape'&&!hasCan&&manhattan(player,canSpot)<=1){hasCan=true;pickupSound();announce('Empty can collected. Find batteries to build a noise lure.',false);tryCraftLure();updateHud();draw();return;}
   if(phase==='escape'&&!hasBattery&&manhattan(player,batterySpot)<=1){hasBattery=true;pickupSound();announce('Batteries collected. Find an empty can to build a noise lure.',false);tryCraftLure();updateHud();draw();return;}
   if(phase==='escape'&&!hasCamera&&manhattan(player,cameraSpot)<=1){hasCamera=true;pickupSound();announce('Disposable camera collected. Find a flash cell to weaponize it.',false);tryCraftCamera();updateHud();draw();return;}
@@ -683,7 +706,7 @@ function interact() {
     announce('Office keycard collected. Mr. Hollow enters his enraged phase. Reach the loading exit southeast.', true);
   } else if (hasKey && manhattan(player,exit) <= 1) {
     const lostMemories=memorySideTaskActive?memoryFragments.filter(fragment=>!fragment.recovered).length:0;
-    if(lostMemories>0)announce(`You cannot leave without your memories. ${lostMemories} fragment${lostMemories===1?' remains':'s remain'}. Use the audio compass to find them.`,true);
+    if(lostMemories>0||stolenMemories>0)announce(`You cannot leave without your memories. ${lostMemories} fragment${lostMemories===1?' remains':'s remain'} in the store and ${stolenMemories} stolen by Mr. Hollow.`,true);
     else endGame(true);
   } else {
     const near = nearestImportant();
@@ -712,8 +735,6 @@ function nearestImportant() {
   if(phase==='escape'&&energy<55)foodSpots.forEach((spot,index)=>{if(!eatenFood.has(index))targets.push({...spot,label:'Food'});});
   if(phase==='escape'&&!hasBottle)targets.push({...bottleSpot,label:'Empty bottle'});
   if(phase==='escape'&&!hasCleaner)targets.push({...cleanerSpot,label:'Cleaner'});
-  if(phase==='escape'&&!hasPaper)targets.push({...paperSpot,label:'Store plan'});
-  if(phase==='escape'&&!hasMarker)targets.push({...markerSpot,label:'Marker'});
   if(phase==='escape'&&!hasCan)targets.push({...canSpot,label:'Empty can'});
   if(phase==='escape'&&!hasBattery)targets.push({...batterySpot,label:'Batteries'});
   if(phase==='escape'&&!hasCamera)targets.push({...cameraSpot,label:'Camera'});
@@ -835,10 +856,15 @@ function checkCaught(){
     cabinetRipSound();
     announce('The cabinet door is ripped open. Mr. Hollow found your hiding place.',true);
   }
+  if(catches>=5){startMemoryBattle();return;}
+  const looseFragments=memoryFragments.filter(fragment=>!fragment.recovered).length;
+  if(looseFragments>0){
+    stolenMemories+=looseFragments;
+    memoryFragments=memoryFragments.filter(fragment=>fragment.recovered);
+  }
   const memoryDrop={x:player.x,y:player.y,recovered:false};
   catches++;
   triggerJumpScare(catches>=6?'CAUGHT.':'HE FOUND YOU.',true);
-  if(catches>=6){endGame(false);return;}
   closeByWasNear=false;
   stopCloseBySound();
   playMemoryLossSound();
@@ -852,8 +878,57 @@ function checkCaught(){
   huntMemory=0;
   bossSearching=false;
   const chancesLeft=6-catches;
+  const stolenMessage=stolenMemories?` He stole ${stolenMemories} memory fragment${stolenMemories===1?'':'s'} before leaving another piece behind.`:'';
   const memoryMessage=memorySideTaskActive?' Lost pieces of your memory remain where he caught you. You must recover every fragment by finding it and pressing E before you can escape.':' Something from the encounter is already becoming difficult to remember.';
-  announce(`Mr. Hollow grabbed you, but you broke free. ${chancesLeft} chance${chancesLeft===1?'':'s'} left. He is getting faster.${memoryMessage}`,true);
+  announce(`Mr. Hollow grabbed you, but you broke free. ${chancesLeft} chance${chancesLeft===1?'':'s'} left. He is getting faster.${stolenMessage}${memoryMessage}`,true);
+  updateHud();draw();
+}
+function startMemoryBattle(){
+  if(battleActive)return;
+  battleActive=true;
+  battleHits=0;
+  paused=true;
+  stopDangerMusic(false);
+  triggerJumpScare('DON’T LET HIM LOCK IT.',true);
+  document.querySelector('#battleModal').hidden=false;
+  document.querySelector('#battleProgress').textContent='BREAK FREE: 0 / 6';
+  document.querySelector('#battleText').textContent=`Mr. Hollow has ${stolenMemories} stolen memory fragment${stolenMemories===1?'':'s'}. He is dragging you toward the locked stockroom. Fight before the final lock turns.`;
+  [42,31,52,27,39,24].forEach((frequency,index)=>setTimeout(()=>{tone(frequency,.5,index%2?-.7:.7);noiseBurst(.35,.12,index%2?-.8:.8);},index*420));
+  if(navigator.vibrate)navigator.vibrate([220,80,220,80,400]);
+  announce(`Memory confrontation. Mr. Hollow has ${stolenMemories} stolen memories. Press E or activate Fight Back six times before he locks you in.`,true);
+  battleTimer=setTimeout(()=>finishMemoryBattle(false),9000);
+  document.querySelector('#fightButton').focus();
+}
+function fightBack(){
+  if(!battleActive)return;
+  battleHits++;
+  document.querySelector('#battleProgress').textContent=`BREAK FREE: ${battleHits} / 6`;
+  noiseBurst(.18,.14,battleHits%2?-.65:.65);
+  tone(90+battleHits*34,.12,battleHits%2?-.5:.5);
+  if(navigator.vibrate)navigator.vibrate(70);
+  if(battleHits>=6)finishMemoryBattle(true);
+}
+function finishMemoryBattle(wonBattle){
+  if(!battleActive)return;
+  battleActive=false;
+  paused=false;
+  if(battleTimer){clearTimeout(battleTimer);battleTimer=null;}
+  document.querySelector('#battleModal').hidden=true;
+  if(!wonBattle){
+    battleLost=true;
+    triggerJumpScare('THE LOCK TURNS.',true);
+    endGame(false);
+    return;
+  }
+  const returned=stolenMemories;
+  catches=Math.max(0,catches-returned);
+  stolenMemories=0;
+  bossStunnedUntil=performance.now()+9000;
+  player={...playerStart};
+  boss={...bossStart};
+  energy=Math.max(25,energy);
+  triggerJumpScare('YOU TORE FREE.',true);
+  announce(`You broke his grip. He dropped ${returned} stolen memory fragment${returned===1?'':'s'}. ${returned} chance${returned===1?' was':'s were'} restored. Run.`,true);
   updateHud();draw();
 }
 function endGame(success){
@@ -871,10 +946,10 @@ function endGame(success){
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
   document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
-  document.querySelector('#endMessage').textContent=success?'The loading door slams behind you. From inside, Mr. Hollow quietly says: “See you tomorrow.”':'Mr. Hollow found you between the aisles. Listen, hide, and try a quieter route.';
+  document.querySelector('#endMessage').textContent=success?'The loading door slams behind you. From inside, Mr. Hollow quietly says: “See you tomorrow.”':battleLost?'The stockroom lock turns. The lights outside the door go silent. Mr. Hollow keeps every memory you left behind.':'Mr. Hollow found you between the aisles. Listen, hide, and try a quieter route.';
   document.querySelector('#endModal').hidden=false;
   if(!success)playDeathMusic();
-  announce(success?'You escaped Aisle 13. Shift survived.':'Caught by Mr. Hollow. Shift ended.',true);
+  announce(success?'You escaped Aisle 13. Shift survived.':battleLost?'Mr. Hollow locked you in the stockroom. Shift ended.':'Caught by Mr. Hollow. Shift ended.',true);
 }
 
 function draw() {
@@ -892,8 +967,6 @@ function draw() {
   if(phase==='escape')foodSpots.forEach((spot,index)=>{if(!eatenFood.has(index))drawMarker(spot,'#c7ff4a','FOOD');});
   if(phase==='escape'&&!hasBottle)drawMarker(bottleSpot,'#9bc8ff','BOT');
   if(phase==='escape'&&!hasCleaner)drawMarker(cleanerSpot,'#d49bff','SOAP');
-  if(phase==='escape'&&!hasPaper)drawMarker(paperSpot,'#d6cfac','PLAN');
-  if(phase==='escape'&&!hasMarker)drawMarker(markerSpot,'#d9a06d','PEN');
   if(phase==='escape'&&!hasCan)drawMarker(canSpot,'#a8b1ae','CAN');
   if(phase==='escape'&&!hasBattery)drawMarker(batterySpot,'#e3c866','CELL');
   if(phase==='escape'&&!hasCamera)drawMarker(cameraSpot,'#8be7ff','CAM');
@@ -944,7 +1017,7 @@ function drawMarker(point,color,label){
 function areaName(p){if(p.y<=3)return p.x>=23?'Manager office hall':'Front checkout';if(p.y>=15)return p.x<=9?'Stockroom':p.x>=23?'Loading bay':'Back aisle';return `Aisle ${Math.max(1,Math.floor(p.x/2))}`;}
 function directionWords(dx,dy){const vertical=dy<0?'north':dy>0?'south':'';const horizontal=dx<0?'west':dx>0?'east':'';return vertical&&horizontal?`${vertical}-${horizontal}`:vertical||horizontal||'here';}
 function manhattan(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
-function currentGoal(){return !hasPaper?paperSpot:!hasMarker?markerSpot:!hasFuse||!powerOn?fuse:!hasKey?keycard:exit;}
+function currentGoal(){return !hasFuse||!powerOn?fuse:!hasKey?keycard:exit;}
 
 function ensureAudio(){
   if(audioContext)return;
@@ -1016,7 +1089,7 @@ function eatCarriedFood(){
   foodPortions--;energy=Math.min(100,energy+38);eatSound();announce(`You eat one portion. Energy ${Math.round(energy)}. ${foodPortions} portions remain.`,false);updateHud();
 }
 function useMap(){
-  if(!hasMap){announce('Craft a map by collecting the store plan and marker.',false);return;}
+  if(!hasMap){announce('The guidance map is missing.',false);return;}
   const goal=currentGoal();showMapUntil=performance.now()+12000;announce(`Required map guidance: face ${directionWords(goal.x-player.x,goal.y-player.y)}. Your next objective is ${manhattan(player,goal)} steps away. Listen again whenever you become lost.`,true);tone(620,.12,goal.x-player.x);draw();
 }
 function useLure(){
@@ -1579,7 +1652,10 @@ function beginHorror(){
   phase='escape';
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?.065:0,audioContext.currentTime,.65);
   powerOn=false;
-  foodPortions=3;
+  foodPortions=0;
+  hasPaper=true;
+  hasMarker=true;
+  hasMap=true;
   boss={...bossStart};
   noiseTurns=0;
   lastKnownPlayer={...player};
@@ -1599,8 +1675,26 @@ function beginHorror(){
     playLightsOutMusic();
     setTimeout(()=>tone(55,.7,0),430);
   },550);
-  announce('The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. First build the required guidance map, then find the fuse and escape.',true);
+  announce('The final spill is clean. The lights die. Mr. Hollow locks the doors. Your guidance map is already in your pocket, but you have no food. Find supplies, then use the map to reach the fuse and escape.',true);
 }
+document.querySelector('#fightButton').addEventListener('click',fightBack);
+document.querySelector('#battleModal').addEventListener('pointerdown',event=>{
+  if(!battleActive||event.target.closest('button'))return;
+  battleGestureStart={x:event.clientX,y:event.clientY,time:performance.now(),id:event.pointerId};
+});
+document.querySelector('#battleModal').addEventListener('pointerup',event=>{
+  if(!battleGestureStart||event.pointerId!==battleGestureStart.id||event.target.closest('button'))return;
+  const distance=Math.hypot(event.clientX-battleGestureStart.x,event.clientY-battleGestureStart.y);
+  const duration=performance.now()-battleGestureStart.time;
+  battleGestureStart=null;
+  if(distance>28||duration>340)return;
+  battleGestureTapCount++;
+  if(battleGestureTapTimer){clearTimeout(battleGestureTapTimer);battleGestureTapTimer=null;}
+  if(battleGestureTapCount>=2){
+    battleGestureTapCount=0;
+    fightBack();
+  }else battleGestureTapTimer=setTimeout(()=>{battleGestureTapCount=0;battleGestureTapTimer=null;},430);
+});
 function tone(frequency,duration,pan=0){if(!soundToggle.checked)return;ensureAudio();const o=audioContext.createOscillator(),g=audioContext.createGain(),p=audioContext.createStereoPanner?audioContext.createStereoPanner():audioContext.createGain();o.frequency.value=frequency;o.type='triangle';g.gain.setValueAtTime(.055,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);if('pan'in p)p.pan.value=Math.max(-1,Math.min(1,pan));o.connect(g).connect(p).connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+duration);}
 function spatialCue(dx,frequency){tone(frequency,.13,Math.max(-1,Math.min(1,dx/5)));}
 function keyRattle(dx){[1480,1810,1320].forEach((f,i)=>setTimeout(()=>tone(f,.025,Math.max(-1,Math.min(1,dx/5))),i*42));}
