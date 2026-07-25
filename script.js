@@ -198,6 +198,8 @@ let nextExhaustedMoveAt;
 let audioContext;
 let ambientGain;
 let lastAnnouncement = '';
+let activeSpeechUtterance = null;
+let speechRetryTimer = null;
 let blindMode = false;
 let deferredInstallPrompt = null;
 let language = localStorage.getItem('aisle13Language') === 'es' ? 'es' : 'en';
@@ -442,6 +444,42 @@ function objective() {
   return 'Reach the loading exit in the southeast corner.';
 }
 
+function speakGameMessage(message, allowRetry = true) {
+  if (!('speechSynthesis' in window) || !message) return;
+  if (speechRetryTimer) {
+    clearTimeout(speechRetryTimer);
+    speechRetryTimer = null;
+  }
+  speechSynthesis.cancel();
+  speechSynthesis.resume();
+  const utterance = new SpeechSynthesisUtterance(message);
+  activeSpeechUtterance = utterance;
+  utterance.lang = language === 'es' ? 'es-US' : 'en-US';
+  utterance.rate = blindMode ? 1.05 : 1;
+  utterance.pitch = 0.9;
+  const voices = speechSynthesis.getVoices();
+  const languagePrefix = language === 'es' ? 'es' : 'en';
+  const matchingVoice = voices.find(item => item.lang?.toLowerCase().startsWith(languagePrefix));
+  if (matchingVoice) utterance.voice = matchingVoice;
+  utterance.onend = () => {
+    if (activeSpeechUtterance === utterance) activeSpeechUtterance = null;
+  };
+  utterance.onerror = event => {
+    if (activeSpeechUtterance === utterance) activeSpeechUtterance = null;
+    if (!allowRetry || event.error === 'canceled' || event.error === 'interrupted') return;
+    speechRetryTimer = setTimeout(() => speakGameMessage(message, false), 180);
+  };
+  speechSynthesis.speak(utterance);
+  if (allowRetry) {
+    speechRetryTimer = setTimeout(() => {
+      speechRetryTimer = null;
+      if (activeSpeechUtterance === utterance && !speechSynthesis.speaking && !speechSynthesis.pending) {
+        speakGameMessage(message, false);
+      }
+    }, 350);
+  }
+}
+
 function announce(message, speak = true) {
   const localizedMessage=translateText(message);
   if (!localizedMessage || localizedMessage === lastAnnouncement) return;
@@ -449,14 +487,7 @@ function announce(message, speak = true) {
   liveRegion.textContent = '';
   setTimeout(() => { liveRegion.textContent = localizedMessage; }, 20);
   visualMessage.textContent = localizedMessage;
-  if (speak && narrationToggle.checked && 'speechSynthesis' in window) {
-    speechSynthesis.cancel();
-    const voice = new SpeechSynthesisUtterance(localizedMessage);
-    voice.lang=language==='es'?'es-US':'en-US';
-    voice.rate = blindMode ? 1.05 : 1;
-    voice.pitch = 0.9;
-    speechSynthesis.speak(voice);
-  }
+  if (speak && narrationToggle.checked) speakGameMessage(localizedMessage);
 }
 
 function openDialogue(steps,onDone){
