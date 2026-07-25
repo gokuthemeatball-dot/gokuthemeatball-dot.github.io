@@ -53,9 +53,9 @@ const storeSpeakerRecordings = [
 ];
 storeSpeakerRecordings.forEach(recording=>{recording.loop=false;recording.preload='auto';});
 const spanishStoreSpeakerRecordings = [
-  new Audio('speaker-sound-es-1.mp3?v=79'),
-  new Audio('speaker-sound-es-2.mp3?v=79'),
-  new Audio('speaker-sound-es-3.mp3?v=79')
+  new Audio('speaker-sound-es-1.mp3?v=80'),
+  new Audio('speaker-sound-es-2.mp3?v=80'),
+  new Audio('speaker-sound-es-3.mp3?v=80')
 ];
 spanishStoreSpeakerRecordings.forEach(recording=>{recording.loop=false;recording.preload='auto';});
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
@@ -1626,13 +1626,12 @@ function fearEvent(time){
     const messages=[
       'Store speaker: Cleanup required in aisle thirteen. No aisle thirteen appears on the map.',
       'Store speaker: The building is now closed. One customer remains.',
-      'Store speaker: Employee attendance corrected. No one is permitted to leave.',
-      'A child’s voice whispers through the speaker: He changes when the lights go out.'
+      'Store speaker: Employee attendance corrected. No one is permitted to leave.'
     ];
     const messageIndex=Math.floor(Math.random()*messages.length);
     const message=messages[messageIndex];
     noiseBurst(.32,.055,0);
-    setTimeout(()=>{if(messageIndex<3)playStoreSpeakerRecording(messageIndex,message);else announce(message,true);},180);
+    setTimeout(()=>playStoreSpeakerRecording(messageIndex,message),180);
   }
   if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
