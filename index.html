@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#080b0c" />
+  <meta name="description" content="Night Shift: Aisle 13 — a supermarket survival-horror game for everyone, fully playable with or without sight." />
+  <meta name="application-name" content="Aisle 13" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Aisle 13" />
+  <title>Night Shift: Aisle 13</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="app-icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=32" />
+  <link rel="stylesheet" href="horror-mobile.css?v=64" />
+  <style>.inventory div{flex-wrap:wrap}.inventory{max-width:65%}</style>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header>
+    <div class="wordmark"><span>NIGHT SHIFT</span><strong>AISLE 13</strong></div>
+    <p>SURVIVAL HORROR · PLAYABLE WITH OR WITHOUT SIGHT</p>
+    <button id="accessButton" type="button">Accessibility</button>
+    <button id="helpButton" type="button">Controls</button>
+    <button id="installButton" type="button" hidden>Install App</button>
+  </header>
+
+  <main>
+    <section class="game-shell" aria-labelledby="gameTitle">
+      <div class="game-topbar">
+        <div>
+          <span class="label">CURRENT OBJECTIVE</span>
+          <strong id="objectiveText">Restore power in the stockroom</strong>
+        </div>
+        <div class="status-group">
+          <span id="powerStatus">POWER: OFF</span>
+          <span id="energyStatus">ENERGY: 100</span>
+          <span id="dangerStatus">DANGER: UNKNOWN</span>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="gameCanvas" width="1280" height="800" tabindex="0" role="application" aria-label="Night Shift game map. Left and right arrows turn. Up walks forward. Down walks backward. Shift plus Up runs. E interacts, F controls the flashlight, and C activates the audio compass."></canvas>
+        <div class="screen-vignette" aria-hidden="true"></div>
+        <div class="pause-card" id="pauseCard" hidden><strong>PAUSED</strong><span>Press P to continue</span></div>
+      </div>
+
+      <div class="game-bottombar">
+        <div class="inventory">
+          <span class="label">INVENTORY</span>
+          <div><b id="chanceItem">CHANCES ×6</b><b id="memoryItem">MEMORY STABLE</b><b id="fuseItem">FUSE ○</b><b id="keyItem">KEYCARD ○</b><b id="foodItem">FOOD ×0</b><b id="clueItem">MYSTERY 0/4</b><b id="craftItem">STUN BOTTLE ○</b><b id="mapItem">MAP ○</b><b id="lureItem">NOISE LURE ○</b><b id="cameraItem">FLASH CAMERA ○</b><b id="wedgeItem">DOOR JAMMER ○</b><b id="maskItem">SCENT MASK ○</b></div>
+        </div>
+        <div class="action-log">
+          <span class="label">LAST UPDATE</span>
+          <strong id="visualMessage">Your shift begins. The front doors lock behind you.</strong>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div class="manager-card">
+        <span class="label danger-label">STORE MANAGER</span>
+        <img class="manager-portrait" src="mr-hollow.jpg" alt="Mr. Hollow, a tall pale supermarket manager in an old green vest, holding a heavy ring of keys." />
+        <h1 id="gameTitle">MR. HOLLOW</h1>
+        <p>He tracks noise, light, and disturbed aisles. His keys are often the only warning you receive.</p>
+      </div>
+
+      <section class="controls-card">
+        <span class="label">CONTROLS</span>
+        <div><kbd>← →</kbd><span>turn left or right</span></div>
+        <div><kbd>↑ ↓</kbd><span>forward or backward</span></div>
+        <div><kbd>Shift + ↑</kbd><span>run forward</span></div>
+        <div><kbd>E</kbd><span>interact, collect, or eat</span></div>
+        <div><kbd>B</kbd><span>throw crafted stun bottle</span></div>
+        <div><kbd>R</kbd><span>eat carried food</span></div>
+        <div><kbd>M</kbd><span>use crafted guidance map</span></div>
+        <div><kbd>N</kbd><span>deploy crafted noise lure</span></div>
+        <div><kbd>X</kbd><span>fire crafted flash camera</span></div>
+        <div><kbd>V</kbd><span>place crafted door jammer</span></div>
+        <div><kbd>Z</kbd><span>use crafted scent mask</span></div>
+        <div><kbd>H</kbd><span>crouch and move quietly</span></div>
+        <div><kbd>F</kbd><span>flashlight</span></div>
+        <div><kbd>P</kbd><span>pause</span></div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="touch-controls" aria-label="Touch game controls" aria-describedby="mobileControlsHelp">
+    <p id="mobileControlsHelp" class="sr-only">Screen reader controls. Swipe left or right to choose a control, then double tap to activate it. Use Listen for directional guidance and Repeat for the current objective.</p>
+    <div class="dpad" role="group" aria-label="Movement controls">
+      <button data-move="up" aria-label="Walk forward">▲</button>
+      <button data-move="left" aria-label="Turn left">◀</button>
+      <button data-move="down" aria-label="Walk backward">▼</button>
+      <button data-move="right" aria-label="Turn right">▶</button>
+    </div>
+    <div class="touch-actions" role="group" aria-label="Game action controls">
+      <button id="touchInteract" class="primary-touch" aria-label="Interact, collect, clean, serve, eat, or hide">INTERACT</button>
+      <button data-action="run" aria-label="Run forward">RUN</button>
+      <button data-action="flashlight" aria-label="Toggle flashlight">LIGHT</button>
+      <button data-action="crouch" aria-label="Toggle crouch">CROUCH</button>
+      <button data-action="compass" aria-label="Audio compass">LISTEN</button>
+      <button data-action="repeat" aria-label="Repeat current objective">REPEAT</button>
+      <button data-action="food" aria-label="Eat carried food">EAT</button>
+      <button data-action="camera" aria-label="Use flash camera">CAMERA</button>
+      <button data-action="jammer" aria-label="Place door jammer">JAMMER</button>
+      <button data-action="mask" aria-label="Use scent mask">MASK</button>
+    </div>
+  </section>
+
+  <section id="gestureControls" class="gesture-controls" aria-label="Full-screen gesture controller" hidden>
+    <div id="gesturePad" class="gesture-pad" role="application" tabindex="0" aria-label="Gesture pad. Swipe and hold up to walk. Tap once, then swipe up and hold to run. Swipe down and hold to move backward. Swipe left or right and hold to turn. Double tap to interact. Triple tap to toggle the flashlight. Two-finger single tap to crouch. Two-finger double tap to eat. Swipe down then up to choose an item. Swipe up then down to use it.">
+      <strong id="gestureTitle">GESTURE MODE</strong>
+      <span id="gestureHint">Use the whole screen as one controller</span>
+      <b id="gestureItemStatus">SELECTED ITEM: FLASHLIGHT</b>
+    </div>
+  </section>
+
+  <div id="jumpScare" class="jump-scare" aria-hidden="true" hidden>
+    <img src="mr-hollow.jpg" alt="" />
+    <strong id="jumpScareText">RUN.</strong>
+  </div>
+
+  <div class="modal" id="storyModal" role="dialog" aria-modal="true" aria-labelledby="storySpeaker" hidden>
+    <div class="modal-card story-card">
+      <img src="mr-hollow.jpg" alt="Mr. Hollow standing behind the supermarket service counter." />
+      <span class="label">BEFORE CLOSING</span>
+      <h2 id="storySpeaker">MR. HOLLOW</h2>
+      <p id="storyText"></p>
+      <button id="storyNextButton" type="button">CONTINUE <span>→</span></button>
+    </div>
+  </div>
+
+  <div class="modal" id="startModal" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <div class="modal-card">
+      <img class="start-art" src="aisle13-keyart.jpg" alt="A dark abandoned supermarket aisle with Mr. Hollow standing beneath failing fluorescent lights." />
+      <p class="kicker">NIGHT SHIFT</p>
+      <h2 id="startTitle">AISLE 13</h2>
+      <p id="startDescription">A routine overnight sanitation shift. No customers, no coworkers, and one manager who never seems to leave.</p>
+      <p id="audienceNote" class="audience-note">Built for every player. Play visually, through sound, or with both—every objective, threat, and interaction remains available.</p>
+      <button id="startAccessButton" type="button">ACCESSIBILITY</button>
+      <button id="startButton" type="button">START GAME <span>→</span></button>
+      <small id="headphonesNote">Headphones recommended for spatial audio. Narration is optional.</small>
+    </div>
+  </div>
+
+  <div class="modal" id="accessModal" role="dialog" aria-modal="true" aria-labelledby="accessTitle" hidden>
+    <div class="modal-card access-card">
+      <span class="label">PLAY OPTIONS</span>
+      <h2 id="accessTitle">Visual, audio, or both</h2>
+      <p>Sighted, blind, and low-vision players share the same story, map, objectives, and difficulty. Choose the information that works best for you.</p>
+      <label><input id="narrationToggle" type="checkbox" /> <span id="narrationLabel">Spoken game updates</span></label>
+      <label><input id="soundToggle" type="checkbox" checked /> <span id="soundLabel">Spatial sounds and music</span></label>
+      <label><input id="contrastToggle" type="checkbox" /> <span id="contrastLabel">Extra-high contrast</span></label>
+      <label><input id="blindModeStart" type="checkbox" /> <span id="gestureModeLabel">Blind mobile gesture mode and frequent spoken navigation</span></label>
+      <label><span id="languageLabel">Language</span>
+        <select id="languageSelect">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+      </label>
+      <button id="compassButton" type="button">Audio compass <kbd>C</kbd></button>
+      <button id="repeatButton" type="button">Repeat objective <kbd>Q</kbd></button>
+      <button id="closeAccessButton" type="button">DONE <span>→</span></button>
+    </div>
+  </div>
+
+  <div class="modal" id="endModal" role="dialog" aria-modal="true" aria-labelledby="endTitle" hidden>
+    <div class="modal-card end-card">
+      <p class="kicker" id="endKicker">SHIFT ENDED</p>
+      <h2 id="endTitle">CAUGHT.</h2>
+      <p id="endMessage">Mr. Hollow found you between the aisles.</p>
+      <button id="restartButton" type="button">TRY AGAIN <span>↻</span></button>
+    </div>
+  </div>
+
+  <p id="liveRegion" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
+  <script src="script.js?v=64"></script>
+</body>
+</html>

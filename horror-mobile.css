@@ -1,0 +1,76 @@
+.touch-controls{gap:24px}
+.dpad button,.touch-actions button{min-height:50px;border:1px solid #475351;background:#151d1e;color:#fff;cursor:pointer;touch-action:manipulation}
+.touch-actions{display:grid;grid-template-columns:repeat(4,minmax(62px,1fr));gap:6px;max-width:460px}
+.touch-actions button{font-size:9px;padding:8px}
+.touch-actions .primary-touch{grid-column:span 2;color:var(--acid);font-weight:800;border-color:#70855f}
+.screen-reader-controls .touch-controls{outline:2px solid var(--acid);outline-offset:-2px}
+.screen-reader-controls .dpad button,.screen-reader-controls .touch-actions button{min-height:56px;font-size:11px}
+.screen-reader-controls .touch-actions{grid-template-columns:repeat(2,minmax(100px,1fr))}
+.screen-reader-controls .touch-actions .primary-touch{grid-column:span 2}
+.gesture-controls{display:none}
+.gesture-controls[hidden]{display:none}
+.screen-reader-controls .touch-controls{display:none}
+.screen-reader-controls{overflow:hidden}
+.screen-reader-controls header,.screen-reader-controls main{display:none}
+.screen-reader-controls .gesture-controls{display:block;position:fixed;z-index:40;inset:0;width:100vw;height:100dvh;padding:0;background:#080b0c}
+.gesture-pad{width:100%;height:100%;min-height:220px;border:2px solid var(--acid);background:radial-gradient(circle at center,#1c2927,#080b0c 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;touch-action:none;user-select:none;-webkit-user-select:none}
+.gesture-pad strong{font:900 28px/1 "Barlow Condensed";letter-spacing:.12em;color:var(--acid)}
+.gesture-pad span{font:500 11px/1.4 "IBM Plex Mono";color:#d5dfdb}
+.gesture-pad b{font:700 11px/1.3 "IBM Plex Mono";color:#ffc44a}
+.gesture-pad.gesture-active{background:radial-gradient(circle at center,#314941,#080b0c 75%);box-shadow:inset 0 0 35px #c7ff4a33}
+.jump-scare{position:fixed;z-index:100;inset:0;background:#000;display:grid;place-items:center;overflow:hidden;animation:scareShake .09s steps(2) infinite}
+.jump-scare[hidden]{display:none}
+.jump-scare img{width:100%;height:100%;object-fit:cover;filter:contrast(1.8) saturate(.3) brightness(.55);transform:scale(1.45)}
+.jump-scare::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,transparent 5%,#52000888 42%,#000 78%);animation:scarePulse .16s alternate infinite}
+.jump-scare strong{position:absolute;z-index:2;bottom:10%;font:900 clamp(60px,16vw,180px)/.8 "Barlow Condensed";letter-spacing:.08em;color:#fff;text-shadow:0 0 12px #f00,8px 5px #900}
+.danger-flash .canvas-wrap{box-shadow:0 0 0 2px #ff414d,0 0 40px #8a000088}
+.story-card{display:grid;grid-template-columns:150px 1fr;column-gap:22px;align-items:start}
+.story-card img{grid-row:1/5;width:150px;height:210px;object-fit:cover;object-position:center 20%;filter:contrast(1.15) saturate(.65);border:1px solid #43504d}
+.story-card .label{margin-top:4px}
+.story-card h2{font-size:44px;margin:8px 0 12px}
+.story-card p{min-height:70px;margin:0 0 18px;color:#d5dfdb!important;font-size:15px}
+.story-card button{grid-column:2}
+@keyframes scareShake{from{transform:translate(-7px,4px)}to{transform:translate(7px,-4px)}}
+@keyframes scarePulse{from{opacity:.35}to{opacity:1}}
+@media(max-width:600px){
+  body{padding-bottom:8px}
+  header{height:62px;padding:0 10px;gap:8px}
+  .wordmark strong{font-size:23px}
+  header button{padding:8px;font-size:9px}
+  main{padding:7px;gap:8px}
+  .game-shell{min-width:0;width:100%;overflow:hidden}
+  .game-bottombar>*{min-width:0}
+  .game-topbar,.game-bottombar{padding:10px;gap:8px}
+  .status-group{gap:4px}
+  .status-group span{padding:6px 4px;font-size:8px}
+  .inventory{max-width:100%!important;width:100%;overflow-x:auto;padding-bottom:4px}
+  .inventory div{width:max-content;flex-wrap:nowrap!important}
+  .inventory b{font-size:8px;padding:6px}
+  .action-log strong{font-size:10px;line-height:1.35;display:block}
+  .modal{padding:8px}
+  .modal-card{padding:15px}
+  .start-art{height:128px}
+  .canvas-wrap{min-height:51vw}
+  .canvas-wrap canvas{width:100%;height:auto;max-height:none}
+  .touch-controls{padding:4px 7px 12px;gap:8px;align-items:stretch}
+  .dpad{flex:0 0 144px;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,52px);gap:4px}
+  .dpad button{min-height:52px}
+  .touch-actions{flex:1;grid-template-columns:repeat(3,minmax(48px,1fr));gap:4px}
+  .touch-actions button{min-height:32px;padding:4px;font-size:8px}
+  .touch-actions .primary-touch{grid-column:span 2}
+  .screen-reader-controls .touch-controls{flex-direction:column}
+  .screen-reader-controls .dpad{align-self:center}
+  .screen-reader-controls .touch-actions{width:100%;grid-template-columns:repeat(2,minmax(110px,1fr))}
+  .screen-reader-controls .touch-actions button{min-height:54px;font-size:11px}
+  .screen-reader-controls .gesture-controls{height:calc(100dvh - 76px);padding:6px}
+  .screen-reader-controls .gesture-pad{height:100%;min-height:430px}
+  .jump-scare strong{bottom:16%}
+  .story-card{grid-template-columns:82px 1fr;column-gap:12px}
+  .story-card img{width:82px;height:120px}
+  .story-card h2{font-size:31px;margin:5px 0 8px}
+  .story-card p{font-size:12px;min-height:74px}
+  .story-card button{grid-column:1/3}
+}
+@media(orientation:portrait){
+  .screen-reader-controls .gesture-pad::before{content:"ROTATE DEVICE TO LANDSCAPE";position:absolute;top:18px;color:#ffc44a;font:700 11px "IBM Plex Mono";letter-spacing:.08em}
+}
