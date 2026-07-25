@@ -31,6 +31,9 @@ dangerMusic.preload = 'auto';
 const deathMusic = new Audio('death-song.mp3?v=51');
 deathMusic.loop = true;
 deathMusic.preload = 'auto';
+const deathSoundEffect = new Audio('death-sound-effect.mp3?v=72');
+deathSoundEffect.loop = false;
+deathSoundEffect.preload = 'auto';
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
 lightsOutMusic.loop = false;
 lightsOutMusic.preload = 'auto';
@@ -1244,6 +1247,9 @@ function playDeathMusic(){
   deathMusic.currentTime=0;
   deathMusic.volume=.82;
   deathMusic.play().catch(()=>{});
+  deathSoundEffect.currentTime=0;
+  deathSoundEffect.volume=.95;
+  deathSoundEffect.play().catch(()=>{});
 }
 function playMemoryLossSound(){
   if(!soundToggle.checked)return;
@@ -1269,11 +1275,16 @@ memoryLossSound.addEventListener('ended',()=>{
 function stopDeathMusic(){
   deathMusic.pause();
   deathMusic.currentTime=0;
+  deathSoundEffect.pause();
+  deathSoundEffect.currentTime=0;
 }
 function primeDeathMusic(){
   deathMusic.volume=0;
   const primed=deathMusic.play();
   if(primed)primed.then(()=>{deathMusic.pause();deathMusic.currentTime=0;deathMusic.volume=.82;}).catch(()=>{});
+  deathSoundEffect.volume=0;
+  const effectPrimed=deathSoundEffect.play();
+  if(effectPrimed)effectPrimed.then(()=>{deathSoundEffect.pause();deathSoundEffect.currentTime=0;deathSoundEffect.volume=.95;}).catch(()=>{});
 }
 function playLightsOutMusic(){
   if(!soundToggle.checked){lightsOutMusicActive=false;return;}
