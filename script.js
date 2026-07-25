@@ -1030,10 +1030,10 @@ function beginGestureHold(direction){
   },340);
 }
 function orientedGestureDelta(dx,dy){
-  const angle=Number(screen.orientation?.angle);
-  if(angle===90)return {dx:dy,dy:-dx};
+  if(innerWidth<=innerHeight)return {dx,dy};
+  const angle=Number(screen.orientation?.angle ?? window.orientation ?? 90);
   if(angle===270||angle===-90)return {dx:-dy,dy:dx};
-  return {dx,dy};
+  return {dx:dy,dy:-dx};
 }
 gesturePad.addEventListener('pointerdown',event=>{
   event.preventDefault();
@@ -1351,7 +1351,7 @@ function startTheme(){
 function beginHorror(){
   stopDangerMusic(true);
   phase='escape';
-  if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?.038:0,audioContext.currentTime,.65);
+  if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?.065:0,audioContext.currentTime,.65);
   powerOn=false;
   foodPortions=3;
   boss={...bossStart};
@@ -1478,7 +1478,7 @@ document.querySelector('#compassButton').addEventListener('click',audioCompass);
 document.querySelector('#repeatButton').addEventListener('click',()=>announce(objective(),true));
 document.querySelector('#contrastToggle').addEventListener('change',event=>document.body.classList.toggle('extra-contrast',event.target.checked));
 soundToggle.addEventListener('change',()=>{
-  if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.038:.018):0,audioContext.currentTime,.08);
+  if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.065:.018):0,audioContext.currentTime,.08);
   if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
 });
 languageSelect.addEventListener('change',()=>{
