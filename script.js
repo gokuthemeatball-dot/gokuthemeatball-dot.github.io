@@ -34,6 +34,9 @@ deathMusic.preload = 'auto';
 const deathSoundEffect = new Audio('death-sound-effect.mp3?v=72');
 deathSoundEffect.loop = false;
 deathSoundEffect.preload = 'auto';
+const closeBySound = new Audio('close-by-sound.mp3?v=73');
+closeBySound.loop = false;
+closeBySound.preload = 'auto';
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
 lightsOutMusic.loop = false;
 lightsOutMusic.preload = 'auto';
@@ -193,6 +196,7 @@ let storyGestureTapTimer = null;
 let startGestureStart = null;
 let startGestureTapCount = 0;
 let startGestureTapTimer = null;
+let closeByWasNear = false;
 
 const spanishExact = {
   'Listen to Mr. Hollow’s instructions.':'Escucha las instrucciones del señor Hollow.',
@@ -293,6 +297,7 @@ function resetGame() {
   stopStoreTrack(true);
   stopExplorationTrack(true);
   stopMemoryLossSound();
+  stopCloseBySound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   player = {...playerStart};
   boss = {...bossStart};
@@ -360,6 +365,7 @@ function resetGame() {
   explorationTrackActive = false;
   memoryFragments = [];
   memorySideTaskActive = false;
+  closeByWasNear = false;
   powerOn = true;
   document.querySelector('#endModal').hidden = true;
   document.querySelector('#storyModal').hidden = true;
@@ -798,6 +804,8 @@ function checkCaught(){
   catches++;
   triggerJumpScare(catches>=6?'CAUGHT.':'HE FOUND YOU.',true);
   if(catches>=6){endGame(false);return;}
+  closeByWasNear=false;
+  stopCloseBySound();
   playMemoryLossSound();
   memoryFragments.push(memoryDrop);
   if(catches>=2)memorySideTaskActive=true;
@@ -820,6 +828,7 @@ function endGame(success){
   stopStoreTrack(true);
   stopExplorationTrack(true);
   stopMemoryLossSound();
+  stopCloseBySound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
   document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
@@ -1269,6 +1278,31 @@ function primeMemoryLossSound(){
   const primed=memoryLossSound.play();
   if(primed)primed.then(()=>{memoryLossSound.pause();memoryLossSound.currentTime=0;memoryLossSound.volume=.9;}).catch(()=>{});
 }
+function playCloseBySound(){
+  if(!soundToggle.checked)return;
+  closeBySound.currentTime=0;
+  closeBySound.volume=.9;
+  closeBySound.play().catch(()=>{});
+}
+function stopCloseBySound(){
+  closeBySound.pause();
+  closeBySound.currentTime=0;
+}
+function primeCloseBySound(){
+  closeBySound.volume=0;
+  const primed=closeBySound.play();
+  if(primed)primed.then(()=>{closeBySound.pause();closeBySound.currentTime=0;closeBySound.volume=.9;}).catch(()=>{});
+}
+function updateCloseBySound(distance){
+  if(!running||paused||phase!=='escape'||!soundToggle.checked)return;
+  if(!closeByWasNear&&distance<=4){
+    closeByWasNear=true;
+    playCloseBySound();
+  }else if(closeByWasNear&&distance>=9){
+    closeByWasNear=false;
+    playCloseBySound();
+  }
+}
 memoryLossSound.addEventListener('ended',()=>{
   if(running&&phase==='escape'&&!dangerMusicActive)playRandomExplorationSegment();
 });
@@ -1492,7 +1526,7 @@ function fearEvent(time){
   if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
-function gameLoop(time){bossStep(time);updateDangerMusic(time,manhattan(player,boss));fearEvent(time);requestAnimationFrame(gameLoop);}
+function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
 window.addEventListener('keydown',event=>{
   if(document.querySelector('#storyModal').hidden===false){
     if(event.code==='Enter'&&!event.repeat){event.preventDefault();advanceDialogue();}
@@ -1561,7 +1595,7 @@ document.querySelector('#repeatButton').addEventListener('click',()=>announce(ob
 document.querySelector('#contrastToggle').addEventListener('change',event=>document.body.classList.toggle('extra-contrast',event.target.checked));
 soundToggle.addEventListener('change',()=>{
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.065:.018):0,audioContext.currentTime,.08);
-  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
+  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
 });
 languageSelect.addEventListener('change',()=>{
   language=languageSelect.value==='es'?'es':'en';
@@ -1578,7 +1612,7 @@ function startGame(){
   gestureControls.hidden=!blindMode;
   if(blindMode)enterGestureFullscreen();
   document.querySelector('#startModal').hidden=true;
-  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();resetGame();
+  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();resetGame();
   (blindMode?gesturePad:canvas).focus();
   tone(660,.09,0);setTimeout(()=>tone(880,.14,0),110);
   if(blindMode){
