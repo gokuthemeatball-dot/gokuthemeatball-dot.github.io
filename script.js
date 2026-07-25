@@ -22,7 +22,6 @@ const narrationToggle = document.querySelector('#narrationToggle');
 const soundToggle = document.querySelector('#soundToggle');
 const installButton = document.querySelector('#installButton');
 const languageSelect = document.querySelector('#languageSelect');
-const startLanguageSelect = document.querySelector('#startLanguageSelect');
 const startButton = document.querySelector('#startButton');
 const gestureControls = document.querySelector('#gestureControls');
 const gesturePad = document.querySelector('#gesturePad');
@@ -196,7 +195,6 @@ let lastAnnouncement = '';
 let blindMode = false;
 let deferredInstallPrompt = null;
 let language = localStorage.getItem('aisle13Language') === 'es' ? 'es' : 'en';
-let startChoiceMade = false;
 let selectedGestureItem = 0;
 let gestureStart = null;
 let gestureLast = null;
@@ -298,11 +296,6 @@ function applyLanguage(){
   document.querySelector('#contrastLabel').textContent=es?'Contraste extra alto':'Extra-high contrast';
   document.querySelector('#gestureModeLabel').textContent=es?'Modo de gestos móvil para jugadores ciegos y navegación hablada frecuente':'Blind mobile gesture mode and frequent spoken navigation';
   document.querySelector('#languageLabel').textContent=es?'Idioma':'Language';
-  document.querySelector('#startLanguageLabel').textContent=es?'Elige tu idioma':'Choose your language';
-  document.querySelector('#startLanguageSelect').options[0].textContent=es?'Selecciona un idioma':'Select a language';
-  document.querySelector('#startChoiceStatus').textContent=startChoiceMade
-    ? (es?'Listo. Puedes iniciar el juego.':'Ready. You can start the game.')
-    : (es?'Elige un idioma o abre Accesibilidad y selecciona tus opciones para desbloquear el juego.':'Choose a language, or open Accessibility and select your options, to unlock the game.');
   document.querySelector('#gestureTitle').textContent=es?'MODO DE GESTOS':'GESTURE MODE';
   document.querySelector('#gestureHint').textContent=es?'Usa toda la pantalla como un solo control':'Use the whole screen as one controller';
   updateGestureItemStatus();
@@ -1717,30 +1710,13 @@ soundToggle.addEventListener('change',()=>{
 });
 languageSelect.addEventListener('change',()=>{
   language=languageSelect.value==='es'?'es':'en';
-  startLanguageSelect.value=language;
   localStorage.setItem('aisle13Language',language);
-  startChoiceMade=true;
-  startButton.disabled=false;
   lastAnnouncement='';
   applyLanguage();
   announce(language==='es'?'Idioma cambiado a español.':'Language changed to English.',true);
 });
-startLanguageSelect.addEventListener('change',()=>{
-  language=startLanguageSelect.value==='es'?'es':'en';
-  languageSelect.value=language;
-  localStorage.setItem('aisle13Language',language);
-  startChoiceMade=true;
-  startButton.disabled=false;
-  lastAnnouncement='';
-  applyLanguage();
-  announce(language==='es'?'Español seleccionado. Ya puedes iniciar el juego.':'English selected. You can now start the game.',true);
-});
 function startGame(){
   if(document.querySelector('#startModal').hidden)return;
-  if(!startChoiceMade){
-    announce(language==='es'?'Elige un idioma o configura Accesibilidad antes de iniciar.':'Choose a language or configure Accessibility before starting.',true);
-    return;
-  }
   blindMode=document.querySelector('#blindModeStart').checked;
   if(blindMode)narrationToggle.checked=true;
   document.body.classList.toggle('screen-reader-controls',blindMode);
@@ -1776,7 +1752,7 @@ document.querySelector('#startModal').addEventListener('pointerup',event=>{
 document.querySelector('#restartButton').addEventListener('click',()=>{resetGame();startIntro();});
 document.querySelector('#accessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
 document.querySelector('#startAccessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
-document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;startChoiceMade=true;startButton.disabled=false;startLanguageSelect.value=language;applyLanguage();announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active. You can now start the game.',true);(blindMode&&running?gesturePad:canvas).focus();});
+document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active.',true);(blindMode&&running?gesturePad:canvas).focus();});
 document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
 window.addEventListener('beforeinstallprompt',event=>{
   event.preventDefault();
