@@ -1032,7 +1032,7 @@ function beginGestureHold(direction){
 function orientedGestureDelta(dx,dy){
   // Blind gesture mode is played in landscape with the charging port on the right.
   // Some mobile browsers keep reporting portrait pointer axes after fullscreen.
-  return {dx:-dy,dy:dx};
+  return {dx:dy,dy:-dx};
 }
 gesturePad.addEventListener('pointerdown',event=>{
   event.preventDefault();
