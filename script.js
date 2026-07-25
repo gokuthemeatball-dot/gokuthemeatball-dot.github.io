@@ -40,6 +40,9 @@ storeTrack.preload = 'auto';
 const explorationTrack = new Audio('exploration-song.mp3?v=51');
 explorationTrack.loop = false;
 explorationTrack.preload = 'auto';
+const memoryLossSound = new Audio('caught-memory-loss-sound.mp3?v=71');
+memoryLossSound.loop = false;
+memoryLossSound.preload = 'auto';
 
 const TILE = 40;
 const COLS = 32;
@@ -286,6 +289,7 @@ function resetGame() {
   stopLightsOutMusic();
   stopStoreTrack(true);
   stopExplorationTrack(true);
+  stopMemoryLossSound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   player = {...playerStart};
   boss = {...bossStart};
@@ -791,6 +795,7 @@ function checkCaught(){
   catches++;
   triggerJumpScare(catches>=6?'CAUGHT.':'HE FOUND YOU.',true);
   if(catches>=6){endGame(false);return;}
+  playMemoryLossSound();
   memoryFragments.push(memoryDrop);
   if(catches>=2)memorySideTaskActive=true;
   impactSound();
@@ -811,6 +816,7 @@ function endGame(success){
   stopLightsOutMusic();
   stopStoreTrack(true);
   stopExplorationTrack(true);
+  stopMemoryLossSound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
   document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
@@ -1239,6 +1245,27 @@ function playDeathMusic(){
   deathMusic.volume=.82;
   deathMusic.play().catch(()=>{});
 }
+function playMemoryLossSound(){
+  if(!soundToggle.checked)return;
+  stopDangerMusic(true);
+  stopExplorationTrack(true);
+  stopLightsOutMusic();
+  memoryLossSound.currentTime=0;
+  memoryLossSound.volume=.9;
+  memoryLossSound.play().catch(()=>{});
+}
+function stopMemoryLossSound(){
+  memoryLossSound.pause();
+  memoryLossSound.currentTime=0;
+}
+function primeMemoryLossSound(){
+  memoryLossSound.volume=0;
+  const primed=memoryLossSound.play();
+  if(primed)primed.then(()=>{memoryLossSound.pause();memoryLossSound.currentTime=0;memoryLossSound.volume=.9;}).catch(()=>{});
+}
+memoryLossSound.addEventListener('ended',()=>{
+  if(running&&phase==='escape'&&!dangerMusicActive)playRandomExplorationSegment();
+});
 function stopDeathMusic(){
   deathMusic.pause();
   deathMusic.currentTime=0;
@@ -1523,7 +1550,7 @@ document.querySelector('#repeatButton').addEventListener('click',()=>announce(ob
 document.querySelector('#contrastToggle').addEventListener('change',event=>document.body.classList.toggle('extra-contrast',event.target.checked));
 soundToggle.addEventListener('change',()=>{
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.065:.018):0,audioContext.currentTime,.08);
-  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
+  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
 });
 languageSelect.addEventListener('change',()=>{
   language=languageSelect.value==='es'?'es':'en';
@@ -1540,7 +1567,7 @@ function startGame(){
   gestureControls.hidden=!blindMode;
   if(blindMode)enterGestureFullscreen();
   document.querySelector('#startModal').hidden=true;
-  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();resetGame();
+  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();resetGame();
   (blindMode?gesturePad:canvas).focus();
   tone(660,.09,0);setTimeout(()=>tone(880,.14,0),110);
   if(blindMode){
