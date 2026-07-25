@@ -1881,8 +1881,9 @@ function closeAccessMenu(applySettings=true){
   if(applySettings){
     blindMode=document.querySelector('#blindModeStart').checked;
     if(blindMode)narrationToggle.checked=true;
-    document.body.classList.toggle('screen-reader-controls',blindMode);
-    gestureControls.hidden=!blindMode;
+    const gameAlreadyStarted=document.querySelector('#startModal').hidden;
+    document.body.classList.toggle('screen-reader-controls',blindMode&&gameAlreadyStarted);
+    gestureControls.hidden=!(blindMode&&gameAlreadyStarted);
   }
   document.querySelector('#accessModal').hidden=true;
   document.querySelectorAll('[aria-controls="accessModal"]').forEach(button=>button.setAttribute('aria-expanded','false'));
