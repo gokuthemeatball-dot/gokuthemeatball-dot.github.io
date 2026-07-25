@@ -52,6 +52,12 @@ const storeSpeakerRecordings = [
   new Audio('speaker-sound-3.mp3?v=78')
 ];
 storeSpeakerRecordings.forEach(recording=>{recording.loop=false;recording.preload='auto';});
+const spanishStoreSpeakerRecordings = [
+  new Audio('speaker-sound-es-1.mp3?v=79'),
+  new Audio('speaker-sound-es-2.mp3?v=79'),
+  new Audio('speaker-sound-es-3.mp3?v=79')
+];
+spanishStoreSpeakerRecordings.forEach(recording=>{recording.loop=false;recording.preload='auto';});
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
 lightsOutMusic.loop = false;
 lightsOutMusic.preload = 'auto';
@@ -1367,19 +1373,20 @@ function primeQuestionSound(){
   if(primed)primed.then(()=>{questionSound.pause();questionSound.currentTime=0;questionSound.volume=.9;}).catch(()=>{});
 }
 function stopStoreSpeakerRecordings(){
-  storeSpeakerRecordings.forEach(recording=>{recording.pause();recording.currentTime=0;});
+  [...storeSpeakerRecordings,...spanishStoreSpeakerRecordings].forEach(recording=>{recording.pause();recording.currentTime=0;});
 }
 function playStoreSpeakerRecording(index,fallbackText){
-  if(language!=='en'||!soundToggle.checked){announce(fallbackText,true);return;}
+  if(!soundToggle.checked){announce(fallbackText,true);return;}
   stopStoreSpeakerRecordings();
-  const recording=storeSpeakerRecordings[index];
-  visualMessage.textContent=fallbackText;
+  const recordings=language==='es'?spanishStoreSpeakerRecordings:storeSpeakerRecordings;
+  const recording=recordings[index];
+  visualMessage.textContent=translateText(fallbackText);
   recording.currentTime=0;
   recording.volume=.95;
   recording.play().catch(()=>announce(fallbackText,true));
 }
 function primeStoreSpeakerRecordings(){
-  storeSpeakerRecordings.forEach(recording=>{
+  [...storeSpeakerRecordings,...spanishStoreSpeakerRecordings].forEach(recording=>{
     recording.volume=0;
     const primed=recording.play();
     if(primed)primed.then(()=>{recording.pause();recording.currentTime=0;recording.volume=.95;}).catch(()=>{});
