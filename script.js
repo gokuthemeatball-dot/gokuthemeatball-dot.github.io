@@ -1029,6 +1029,12 @@ function beginGestureHold(direction){
     gestureHoldTimer=setInterval(()=>gestureStep(direction),330);
   },340);
 }
+function orientedGestureDelta(dx,dy){
+  const angle=Number(screen.orientation?.angle);
+  if(angle===90)return {dx:dy,dy:-dx};
+  if(angle===270||angle===-90)return {dx:-dy,dy:dx};
+  return {dx,dy};
+}
 gesturePad.addEventListener('pointerdown',event=>{
   event.preventDefault();
   gesturePad.setPointerCapture?.(event.pointerId);
@@ -1048,7 +1054,8 @@ gesturePad.addEventListener('pointermove',event=>{
   if(!gestureStart||event.pointerId!==gestureStart.id)return;
   event.preventDefault();
   gestureLast={x:event.clientX,y:event.clientY};
-  const dx=event.clientX-gestureStart.x,dy=event.clientY-gestureStart.y;
+  const rawDx=event.clientX-gestureStart.x,rawDy=event.clientY-gestureStart.y;
+  const {dx,dy}=orientedGestureDelta(rawDx,rawDy);
   if(!gestureFirstVertical&&Math.abs(dy)>45)gestureFirstVertical=dy>0?'down':'up';
   if(gestureFirstVertical==='down'&&dy<-28)gesturePattern='down-up';
   if(gestureFirstVertical==='up'&&dy>28)gesturePattern='up-down';
