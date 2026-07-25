@@ -231,7 +231,7 @@ const spanishExact = {
   'Mr. Hollow orders you to clean the two marked spills.':'El señor Hollow te ordena limpiar los dos derrames marcados.',
   'You are out of energy. Find food and press E to eat.':'No tienes energía. Encuentra comida y usa Interactuar para comer.',
   'Blocked. A shelf or wall is in that direction.':'Bloqueado. Hay un estante o una pared en esa dirección.',
-  'Your memory becomes whole again. Your breathing steadies, your energy rises, and Mr. Hollow loses your trail for four seconds.':'Tu memoria vuelve a estar completa. Recuperas energía y el señor Hollow pierde tu rastro durante cuatro segundos.',
+  'Your memory becomes whole again. One chance is restored. Your breathing steadies, your energy rises, and Mr. Hollow loses your trail for four seconds.':'Tu memoria vuelve a estar completa. Recuperas una oportunidad. Recuperas energía y el señor Hollow pierde tu rastro durante cuatro segundos.',
   'Hidden inside a supply cabinet. Mr. Hollow cannot see you. Press E to leave.':'Estás escondido en un armario. El señor Hollow no puede verte. Usa Interactuar para salir.',
   'You leave the hiding place. Listen before moving.':'Sales del escondite. Escucha antes de moverte.',
   'Fuse collected. Install it at the breaker here by pressing E again.':'Fusible recogido. Instálalo en el interruptor usando Interactuar otra vez.',
@@ -275,6 +275,8 @@ function translateText(message){
     .replace(/^Flashlight on\.$/,'Linterna encendida.').replace(/^Flashlight off\.$/,'Linterna apagada.')
     .replace(/^Selected item: /,'Objeto seleccionado: ')
     .replace(/^Using selected item: /,'Usando objeto: ')
+    .replace(/^Memory fragment restored\. One chance recovered\. You now have (\d+) chances\. (\d+) lost fragment remains\.$/,'Fragmento de memoria restaurado. Recuperaste una oportunidad. Ahora tienes $1 oportunidades. Queda $2 fragmento perdido.')
+    .replace(/^Memory fragment restored\. One chance recovered\. You now have (\d+) chances\. (\d+) lost fragments remain\.$/,'Fragmento de memoria restaurado. Recuperaste una oportunidad. Ahora tienes $1 oportunidades. Quedan $2 fragmentos perdidos.')
     .replace(/^Mr\. Hollow says: /,'El señor Hollow dice: ')
     .replace(/^YOU says: /,'TÚ dices: ');
 }
@@ -606,15 +608,17 @@ function interact() {
   const memoryIndex=phase==='escape'&&memorySideTaskActive?memoryFragments.findIndex(fragment=>!fragment.recovered&&manhattan(player,fragment)<=1):-1;
   if(memoryIndex>=0){
     memoryFragments[memoryIndex].recovered=true;
+    catches=Math.max(0,catches-1);
     energy=Math.min(100,energy+14);
     huntMemory=Math.max(0,huntMemory-3);
     pickupSound();
     const remaining=memoryFragments.filter(fragment=>!fragment.recovered).length;
+    const chancesNow=6-catches;
     if(remaining===0){
       bossStunnedUntil=Math.max(bossStunnedUntil,performance.now()+4000);
-      announce('Your memory becomes whole again. Your breathing steadies, your energy rises, and Mr. Hollow loses your trail for four seconds.',true);
+      announce('Your memory becomes whole again. One chance is restored. Your breathing steadies, your energy rises, and Mr. Hollow loses your trail for four seconds.',true);
     }else{
-      announce(`Memory fragment restored. ${remaining} lost fragment${remaining===1?' remains':'s remain'}.`,true);
+      announce(`Memory fragment restored. One chance recovered. You now have ${chancesNow} chances. ${remaining} lost fragment${remaining===1?' remains':'s remain'}.`,true);
     }
     updateHud();draw();return;
   }
