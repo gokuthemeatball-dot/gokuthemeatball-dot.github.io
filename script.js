@@ -43,6 +43,9 @@ jumpSound.preload = 'auto';
 const surpriseSound = new Audio('surprise-sound.mp3?v=75');
 surpriseSound.loop = false;
 surpriseSound.preload = 'auto';
+const questionSound = new Audio('question-sound.mp3?v=77');
+questionSound.loop = false;
+questionSound.preload = 'auto';
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
 lightsOutMusic.loop = false;
 lightsOutMusic.preload = 'auto';
@@ -307,6 +310,7 @@ function resetGame() {
   stopCloseBySound();
   stopJumpSound();
   stopSurpriseSound();
+  stopQuestionSound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   player = {...playerStart};
   boss = {...bossStart};
@@ -624,6 +628,7 @@ function interact() {
   const clueIndex=phase==='escape'?clueSpots.findIndex((spot,index)=>!foundClues.has(index)&&manhattan(player,spot)<=1):-1;
   if(clueIndex>=0){
     foundClues.add(clueIndex);
+    playQuestionSound();
     tapeGlitchSound();
     announce(`Mystery fragment ${foundClues.size} of 4. ${clueTexts[clueIndex]}`,true);
     updateHud();draw();return;
@@ -646,6 +651,7 @@ function interact() {
     announce('The dark stockroom is impossible to navigate safely without the guidance map. Find the store plan and marker first.',true);
   } else if (!hasFuse && manhattan(player,fuse) <= 1) {
     hasFuse = true;
+    pickupSound();
     announce('Fuse collected. Install it at the breaker here by pressing E again.', true);
   } else if (hasFuse && !powerOn && manhattan(player,fuse) <= 1) {
     powerOn = true;
@@ -655,6 +661,7 @@ function interact() {
     noiseTurns = 5;
   } else if (powerOn && !hasKey && manhattan(player,keycard) <= 1) {
     hasKey = true;
+    pickupSound();
     announce('Office keycard collected. Mr. Hollow enters his enraged phase. Reach the loading exit southeast.', true);
   } else if (hasKey && manhattan(player,exit) <= 1) {
     const lostMemories=memorySideTaskActive?memoryFragments.filter(fragment=>!fragment.recovered).length:0;
@@ -841,6 +848,7 @@ function endGame(success){
   stopCloseBySound();
   stopJumpSound();
   stopSurpriseSound();
+  stopQuestionSound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
   document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
@@ -968,7 +976,7 @@ function toggleFlashlight(){
 }
 function eatSound(){noiseBurst(.16,.045,0);tone(330,.08,0);setTimeout(()=>tone(440,.12,0),120);}
 function heartbeatSound(distance){tone(54,.08,0);setTimeout(()=>tone(47,.1,0),120+distance*18);}
-function pickupSound(){tone(720,.06,-.2);setTimeout(()=>tone(980,.09,.2),70);}
+function pickupSound(){playQuestionSound();}
 function tapeGlitchSound(){noiseBurst(.28,.06,-.3);setTimeout(()=>tone(930,.07,.3),90);setTimeout(()=>noiseBurst(.18,.045,0),170);}
 function cabinetRipSound(){noiseBurst(.55,.13,0);tone(73,.4,0);setTimeout(()=>noiseBurst(.3,.1,0),120);}
 function tryCraft(){
@@ -1335,6 +1343,21 @@ function primeSurpriseSound(){
   const primed=surpriseSound.play();
   if(primed)primed.then(()=>{surpriseSound.pause();surpriseSound.currentTime=0;surpriseSound.volume=.95;}).catch(()=>{});
 }
+function playQuestionSound(){
+  if(!soundToggle.checked)return;
+  questionSound.currentTime=0;
+  questionSound.volume=.9;
+  questionSound.play().catch(()=>{});
+}
+function stopQuestionSound(){
+  questionSound.pause();
+  questionSound.currentTime=0;
+}
+function primeQuestionSound(){
+  questionSound.volume=0;
+  const primed=questionSound.play();
+  if(primed)primed.then(()=>{questionSound.pause();questionSound.currentTime=0;questionSound.volume=.9;}).catch(()=>{});
+}
 function updateSurpriseSound(distance){
   if(!running||paused||phase!=='escape')return;
   const visible=!hidden&&distance<=7;
@@ -1647,7 +1670,7 @@ document.querySelector('#repeatButton').addEventListener('click',()=>announce(ob
 document.querySelector('#contrastToggle').addEventListener('change',event=>document.body.classList.toggle('extra-contrast',event.target.checked));
 soundToggle.addEventListener('change',()=>{
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.065:.018):0,audioContext.currentTime,.08);
-  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopJumpSound();stopSurpriseSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
+  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopJumpSound();stopSurpriseSound();stopQuestionSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
 });
 languageSelect.addEventListener('change',()=>{
   language=languageSelect.value==='es'?'es':'en';
@@ -1664,7 +1687,7 @@ function startGame(){
   gestureControls.hidden=!blindMode;
   if(blindMode)enterGestureFullscreen();
   document.querySelector('#startModal').hidden=true;
-  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();primeSurpriseSound();resetGame();
+  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();primeSurpriseSound();primeQuestionSound();resetGame();
   (blindMode?gesturePad:canvas).focus();
   tone(660,.09,0);setTimeout(()=>tone(880,.14,0),110);
   if(blindMode){
