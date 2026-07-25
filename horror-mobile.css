@@ -82,3 +82,15 @@
 .battle-card>strong{display:block;margin:18px 0;color:#fff;font-size:18px;letter-spacing:.08em}
 .battle-card button{background:#ff414d;color:#fff}
 @keyframes battlePulse{from{filter:brightness(.72)}to{filter:brightness(1.12)}}
+.access-sheet-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.access-close-icon{width:auto!important;margin:0!important;padding:10px 13px!important;background:#171f20!important;color:#fff!important;border:1px solid #52615e!important}
+.talkback-hint{border-left:3px solid #ffc44a;padding:9px 12px;background:#ffc44a0d;color:#dce6df!important;font-size:10px;line-height:1.55}
+#accessModal .access-card label{min-height:48px;padding:8px 4px;margin:2px 0}
+#accessModal .access-card input{min-width:22px;min-height:22px}
+#accessModal .access-card select{min-height:48px;padding:8px;background:#080b0c;color:#fff;border:1px solid #52615e;font:inherit}
+@media(max-width:900px){
+  #accessModal{padding:0;place-items:end center;background:#020404b8}
+  #accessModal .access-card{width:100%;height:auto;max-height:92dvh;border:1px solid #52615e;border-bottom:0;border-radius:20px 20px 0 0;display:block;overflow-y:auto;padding:20px max(18px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+  #accessModal .access-card button{min-height:52px}
+  #accessModal #closeAccessButton{position:sticky;bottom:0;margin-top:14px;box-shadow:0 -12px 22px #101617}
+}

@@ -201,6 +201,8 @@ let lastAnnouncement = '';
 let blindMode = false;
 let deferredInstallPrompt = null;
 let language = localStorage.getItem('aisle13Language') === 'es' ? 'es' : 'en';
+let accessMenuTrigger = null;
+const accessBackgroundState = new Map();
 let selectedGestureItem = 0;
 let gestureStart = null;
 let gestureLast = null;
@@ -298,6 +300,10 @@ function applyLanguage(){
   document.documentElement.lang=language;
   const es=language==='es';
   document.querySelector('#accessTitle').textContent=es?'Visual, audio o ambos':'Visual, audio, or both';
+  document.querySelector('#accessDescription').textContent=es?'Jugadores con visión, ciegos y con baja visión comparten la misma historia, mapa, objetivos y dificultad. Elige la información que te funcione mejor.':'Sighted, blind, and low-vision players share the same story, map, objectives, and difficulty. Choose the information that works best for you.';
+  document.querySelector('#accessTalkBackHint').textContent=es?'TalkBack: desliza a la derecha o izquierda por cada opción y toca dos veces para cambiarla. Elige Listo cuando termines.':'TalkBack: swipe right or left through every option, then double tap to change it. Choose Done when ready.';
+  document.querySelector('#accessCloseIcon').textContent=es?'CERRAR':'CLOSE';
+  document.querySelector('#accessCloseIcon').setAttribute('aria-label',es?'Cerrar menú de accesibilidad':'Close accessibility menu');
   document.querySelector('#startButton').innerHTML=es?'INICIAR JUEGO <span>→</span>':'START GAME <span>→</span>';
   document.querySelector('#startAccessButton').textContent=es?'ACCESIBILIDAD':'ACCESSIBILITY';
   document.querySelector('#accessButton').textContent=es?'Accesibilidad':'Accessibility';
@@ -1848,9 +1854,57 @@ document.querySelector('#startModal').addEventListener('pointerup',event=>{
   }else startGestureTapTimer=setTimeout(()=>{startGestureTapCount=0;startGestureTapTimer=null;},430);
 });
 document.querySelector('#restartButton').addEventListener('click',()=>{resetGame();startIntro();});
-document.querySelector('#accessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
-document.querySelector('#startAccessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
-document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active.',true);(blindMode&&running?gesturePad:canvas).focus();});
+function setAccessBackgroundInert(inert){
+  [...document.body.children].forEach(element=>{
+    if(element.id==='accessModal'||element.id==='liveRegion'||element.tagName==='SCRIPT')return;
+    if(inert){
+      accessBackgroundState.set(element,{inert:element.inert,ariaHidden:element.getAttribute('aria-hidden')});
+      element.inert=true;
+      element.setAttribute('aria-hidden','true');
+    }else{
+      const previous=accessBackgroundState.get(element);
+      element.inert=previous?.inert||false;
+      if(previous?.ariaHidden===null||previous?.ariaHidden===undefined)element.removeAttribute('aria-hidden');
+      else element.setAttribute('aria-hidden',previous.ariaHidden);
+      accessBackgroundState.delete(element);
+    }
+  });
+}
+function openAccessMenu(trigger){
+  accessMenuTrigger=trigger;
+  document.querySelector('#accessModal').hidden=false;
+  document.querySelectorAll('[aria-controls="accessModal"]').forEach(button=>button.setAttribute('aria-expanded','true'));
+  setAccessBackgroundInert(true);
+  requestAnimationFrame(()=>document.querySelector('#accessTitle').focus());
+}
+function closeAccessMenu(applySettings=true){
+  if(applySettings){
+    blindMode=document.querySelector('#blindModeStart').checked;
+    if(blindMode)narrationToggle.checked=true;
+    document.body.classList.toggle('screen-reader-controls',blindMode);
+    gestureControls.hidden=!blindMode;
+  }
+  document.querySelector('#accessModal').hidden=true;
+  document.querySelectorAll('[aria-controls="accessModal"]').forEach(button=>button.setAttribute('aria-expanded','false'));
+  setAccessBackgroundInert(false);
+  const returnTarget=accessMenuTrigger;
+  accessMenuTrigger=null;
+  if(applySettings)announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, two-finger double tap to eat, and three-finger single tap to jump.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active.',true);
+  requestAnimationFrame(()=>{if(returnTarget?.isConnected)returnTarget.focus();else (blindMode&&running?gesturePad:canvas).focus();});
+}
+document.querySelector('#accessButton').addEventListener('click',event=>openAccessMenu(event.currentTarget));
+document.querySelector('#startAccessButton').addEventListener('click',event=>openAccessMenu(event.currentTarget));
+document.querySelector('#closeAccessButton').addEventListener('click',()=>closeAccessMenu(true));
+document.querySelector('#accessCloseIcon').addEventListener('click',()=>closeAccessMenu(false));
+document.querySelector('#accessModal').addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();closeAccessMenu(false);return;}
+  if(event.key!=='Tab')return;
+  const controls=[...event.currentTarget.querySelectorAll('button,input,select,[tabindex]:not([tabindex="-1"])')].filter(element=>!element.disabled&&!element.hidden);
+  if(!controls.length)return;
+  const first=controls[0],last=controls[controls.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
 document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
 window.addEventListener('beforeinstallprompt',event=>{
   event.preventDefault();
