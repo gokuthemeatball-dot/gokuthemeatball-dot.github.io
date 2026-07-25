@@ -1224,6 +1224,9 @@ function beginGestureHold(direction){
   },340);
 }
 function orientedGestureDelta(dx,dy){
+  // Android reports pointer coordinates in the current landscape orientation.
+  // Rotating those coordinates again makes an upward swipe turn the player.
+  if(/Android/i.test(navigator.userAgent))return {dx,dy};
   // Blind gesture mode is played in landscape with the charging port on the right.
   // Some mobile browsers keep reporting portrait pointer axes after fullscreen.
   return {dx:dy,dy:-dx};
