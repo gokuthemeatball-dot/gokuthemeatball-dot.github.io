@@ -46,6 +46,12 @@ surpriseSound.preload = 'auto';
 const questionSound = new Audio('question-sound.mp3?v=77');
 questionSound.loop = false;
 questionSound.preload = 'auto';
+const storeSpeakerRecordings = [
+  new Audio('speaker-sound-1.mp3?v=78'),
+  new Audio('speaker-sound-2.mp3?v=78'),
+  new Audio('speaker-sound-3.mp3?v=78')
+];
+storeSpeakerRecordings.forEach(recording=>{recording.loop=false;recording.preload='auto';});
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
 lightsOutMusic.loop = false;
 lightsOutMusic.preload = 'auto';
@@ -311,6 +317,7 @@ function resetGame() {
   stopJumpSound();
   stopSurpriseSound();
   stopQuestionSound();
+  stopStoreSpeakerRecordings();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   player = {...playerStart};
   boss = {...bossStart};
@@ -849,6 +856,7 @@ function endGame(success){
   stopJumpSound();
   stopSurpriseSound();
   stopQuestionSound();
+  stopStoreSpeakerRecordings();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
   document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
@@ -1358,6 +1366,25 @@ function primeQuestionSound(){
   const primed=questionSound.play();
   if(primed)primed.then(()=>{questionSound.pause();questionSound.currentTime=0;questionSound.volume=.9;}).catch(()=>{});
 }
+function stopStoreSpeakerRecordings(){
+  storeSpeakerRecordings.forEach(recording=>{recording.pause();recording.currentTime=0;});
+}
+function playStoreSpeakerRecording(index,fallbackText){
+  if(language!=='en'||!soundToggle.checked){announce(fallbackText,true);return;}
+  stopStoreSpeakerRecordings();
+  const recording=storeSpeakerRecordings[index];
+  visualMessage.textContent=fallbackText;
+  recording.currentTime=0;
+  recording.volume=.95;
+  recording.play().catch(()=>announce(fallbackText,true));
+}
+function primeStoreSpeakerRecordings(){
+  storeSpeakerRecordings.forEach(recording=>{
+    recording.volume=0;
+    const primed=recording.play();
+    if(primed)primed.then(()=>{recording.pause();recording.currentTime=0;recording.volume=.95;}).catch(()=>{});
+  });
+}
 function updateSurpriseSound(distance){
   if(!running||paused||phase!=='escape')return;
   const visible=!hidden&&distance<=7;
@@ -1595,8 +1622,10 @@ function fearEvent(time){
       'Store speaker: Employee attendance corrected. No one is permitted to leave.',
       'A child’s voice whispers through the speaker: He changes when the lights go out.'
     ];
-    const message=messages[Math.floor(Math.random()*messages.length)];
-    noiseBurst(.32,.055,0);setTimeout(()=>announce(message,true),180);
+    const messageIndex=Math.floor(Math.random()*messages.length);
+    const message=messages[messageIndex];
+    noiseBurst(.32,.055,0);
+    setTimeout(()=>{if(messageIndex<3)playStoreSpeakerRecording(messageIndex,message);else announce(message,true);},180);
   }
   if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
@@ -1670,7 +1699,7 @@ document.querySelector('#repeatButton').addEventListener('click',()=>announce(ob
 document.querySelector('#contrastToggle').addEventListener('change',event=>document.body.classList.toggle('extra-contrast',event.target.checked));
 soundToggle.addEventListener('change',()=>{
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.065:.018):0,audioContext.currentTime,.08);
-  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopJumpSound();stopSurpriseSound();stopQuestionSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
+  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopJumpSound();stopSurpriseSound();stopQuestionSound();stopStoreSpeakerRecordings();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
 });
 languageSelect.addEventListener('change',()=>{
   language=languageSelect.value==='es'?'es':'en';
@@ -1687,7 +1716,7 @@ function startGame(){
   gestureControls.hidden=!blindMode;
   if(blindMode)enterGestureFullscreen();
   document.querySelector('#startModal').hidden=true;
-  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();primeSurpriseSound();primeQuestionSound();resetGame();
+  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();primeSurpriseSound();primeQuestionSound();primeStoreSpeakerRecordings();resetGame();
   (blindMode?gesturePad:canvas).focus();
   tone(660,.09,0);setTimeout(()=>tone(880,.14,0),110);
   if(blindMode){
