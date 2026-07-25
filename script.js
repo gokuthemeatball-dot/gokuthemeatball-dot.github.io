@@ -203,7 +203,7 @@ let startGestureStart = null;
 let startGestureTapCount = 0;
 let startGestureTapTimer = null;
 let closeByWasNear = false;
-let surpriseSoundPlayed = false;
+let bossWasVisible = false;
 
 const spanishExact = {
   'Listen to Mr. Hollow’s instructions.':'Escucha las instrucciones del señor Hollow.',
@@ -375,7 +375,7 @@ function resetGame() {
   memoryFragments = [];
   memorySideTaskActive = false;
   closeByWasNear = false;
-  surpriseSoundPlayed = false;
+  bossWasVisible = false;
   powerOn = true;
   document.querySelector('#endModal').hidden = true;
   document.querySelector('#storyModal').hidden = true;
@@ -1321,8 +1321,7 @@ function primeJumpSound(){
   if(primed)primed.then(()=>{jumpSound.pause();jumpSound.currentTime=0;jumpSound.volume=.9;}).catch(()=>{});
 }
 function playSurpriseSound(){
-  if(!soundToggle.checked||surpriseSoundPlayed)return;
-  surpriseSoundPlayed=true;
+  if(!soundToggle.checked)return;
   surpriseSound.currentTime=0;
   surpriseSound.volume=.95;
   surpriseSound.play().catch(()=>{});
@@ -1335,6 +1334,16 @@ function primeSurpriseSound(){
   surpriseSound.volume=0;
   const primed=surpriseSound.play();
   if(primed)primed.then(()=>{surpriseSound.pause();surpriseSound.currentTime=0;surpriseSound.volume=.95;}).catch(()=>{});
+}
+function updateSurpriseSound(distance){
+  if(!running||paused||phase!=='escape')return;
+  const visible=!hidden&&distance<=7;
+  if(visible&&!bossWasVisible){
+    bossWasVisible=true;
+    playSurpriseSound();
+  }else if(!visible&&(hidden||distance>=9)){
+    bossWasVisible=false;
+  }
 }
 function updateCloseBySound(distance){
   if(!running||paused||phase!=='escape'||!soundToggle.checked)return;
@@ -1569,7 +1578,7 @@ function fearEvent(time){
   if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
-function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);if(running&&phase==='escape'&&!hidden&&bossDistance<=7)playSurpriseSound();updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
+function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
 window.addEventListener('keydown',event=>{
   if(document.querySelector('#storyModal').hidden===false){
     if(event.code==='Enter'&&!event.repeat){event.preventDefault();advanceDialogue();}
