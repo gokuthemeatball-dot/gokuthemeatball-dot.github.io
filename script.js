@@ -183,6 +183,9 @@ let twoFingerTapTimer = null;
 let storyGestureStart = null;
 let storyGestureTapCount = 0;
 let storyGestureTapTimer = null;
+let startGestureStart = null;
+let startGestureTapCount = 0;
+let startGestureTapTimer = null;
 
 const spanishExact = {
   'Listen to Mr. Hollow’s instructions.':'Escucha las instrucciones del señor Hollow.',
@@ -216,6 +219,7 @@ const spanishExact = {
   'Standard control layout active.':'Controles estándar activados.',
   'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.':'Modo de gestos para jugadores ciegos activado. Ahora desactiva VoiceOver o TalkBack. Desliza y mantén para caminar. Toca una vez y después desliza hacia arriba y mantén para correr. Toca dos veces para interactuar, tres veces para la linterna, una vez con dos dedos para agacharte y dos veces con dos dedos para comer.',
   'Blind gesture mode selected. Start the game first, then turn off VoiceOver or TalkBack when instructed.':'Modo de gestos para jugadores ciegos seleccionado. Primero inicia el juego y después desactiva VoiceOver o TalkBack cuando se te indique.',
+  'Blind gesture mode selected. Double tap anywhere on the start screen to begin.':'Modo de gestos para jugadores ciegos seleccionado. Toca dos veces en cualquier parte de la pantalla de inicio para comenzar.',
   'Running forward.':'Corriendo hacia adelante.',
   'Double tap anywhere to continue.':'Toca dos veces en cualquier parte para continuar.',
   'You are the new night employee. I am Mr. Hollow. While these doors are open, every customer leaves satisfied.':'Eres el nuevo empleado nocturno. Soy el señor Hollow. Mientras estas puertas estén abiertas, todos los clientes deben salir satisfechos.',
@@ -1477,7 +1481,8 @@ languageSelect.addEventListener('change',()=>{
   applyLanguage();
   announce(language==='es'?'Idioma cambiado a español.':'Language changed to English.',true);
 });
-document.querySelector('#startButton').addEventListener('click',()=>{
+function startGame(){
+  if(document.querySelector('#startModal').hidden)return;
   blindMode=document.querySelector('#blindModeStart').checked;
   if(blindMode)narrationToggle.checked=true;
   document.body.classList.toggle('screen-reader-controls',blindMode);
@@ -1491,11 +1496,29 @@ document.querySelector('#startButton').addEventListener('click',()=>{
     announce('Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.',true);
     setTimeout(startIntro,5200);
   }else startIntro();
+}
+document.querySelector('#startButton').addEventListener('click',startGame);
+document.querySelector('#startModal').addEventListener('pointerdown',event=>{
+  if(!document.querySelector('#blindModeStart').checked||event.target.closest('button'))return;
+  startGestureStart={x:event.clientX,y:event.clientY,time:performance.now(),id:event.pointerId};
+});
+document.querySelector('#startModal').addEventListener('pointerup',event=>{
+  if(!startGestureStart||event.pointerId!==startGestureStart.id||event.target.closest('button'))return;
+  const distance=Math.hypot(event.clientX-startGestureStart.x,event.clientY-startGestureStart.y);
+  const duration=performance.now()-startGestureStart.time;
+  startGestureStart=null;
+  if(distance>24||duration>320)return;
+  startGestureTapCount++;
+  if(startGestureTapTimer){clearTimeout(startGestureTapTimer);startGestureTapTimer=null;}
+  if(startGestureTapCount>=2){
+    startGestureTapCount=0;
+    startGame();
+  }else startGestureTapTimer=setTimeout(()=>{startGestureTapCount=0;startGestureTapTimer=null;},430);
 });
 document.querySelector('#restartButton').addEventListener('click',()=>{resetGame();startIntro();});
 document.querySelector('#accessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
 document.querySelector('#startAccessButton').addEventListener('click',()=>{document.querySelector('#accessModal').hidden=false;});
-document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.':'Blind gesture mode selected. Start the game first, then turn off VoiceOver or TalkBack when instructed.'):'Standard control layout active.',true);(blindMode&&running?gesturePad:canvas).focus();});
+document.querySelector('#closeAccessButton').addEventListener('click',()=>{blindMode=document.querySelector('#blindModeStart').checked;if(blindMode)narrationToggle.checked=true;document.body.classList.toggle('screen-reader-controls',blindMode);gestureControls.hidden=!blindMode;document.querySelector('#accessModal').hidden=true;announce(blindMode?(running?'Blind gesture mode active. Turn off VoiceOver or TalkBack now. Swipe and hold to walk. Tap once, then swipe up and hold to run. Double tap to interact, triple tap for the flashlight, two-finger single tap to crouch, and two-finger double tap to eat.':'Blind gesture mode selected. Double tap anywhere on the start screen to begin.'):'Standard control layout active.',true);(blindMode&&running?gesturePad:canvas).focus();});
 document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
 window.addEventListener('beforeinstallprompt',event=>{
   event.preventDefault();
