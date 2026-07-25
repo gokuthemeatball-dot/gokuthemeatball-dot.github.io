@@ -1,4 +1,4 @@
-const CACHE_NAME='aisle13-app-v74';
+const CACHE_NAME='aisle13-app-v75';
 const APP_SHELL=[
   './',
   './index.html',
@@ -7,8 +7,8 @@ const APP_SHELL=[
   './app-icon-192.png',
   './app-icon-512.png',
   './style.css?v=32',
-  './horror-mobile.css?v=74',
-  './script.js?v=74',
+  './horror-mobile.css?v=75',
+  './script.js?v=75',
   './mr-hollow.jpg',
   './mr-hollow.png',
   './aisle13-keyart.jpg',
@@ -21,7 +21,8 @@ const APP_SHELL=[
   './caught-memory-loss-sound.mp3?v=71',
   './death-sound-effect.mp3?v=72',
   './close-by-sound.mp3?v=73',
-  './jump-sound.mp3?v=74'
+  './jump-sound.mp3?v=74',
+  './surprise-sound.mp3?v=75'
 ];
 
 self.addEventListener('install',event=>{

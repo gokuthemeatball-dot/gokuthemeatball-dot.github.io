@@ -40,6 +40,9 @@ closeBySound.preload = 'auto';
 const jumpSound = new Audio('jump-sound.mp3?v=74');
 jumpSound.loop = false;
 jumpSound.preload = 'auto';
+const surpriseSound = new Audio('surprise-sound.mp3?v=75');
+surpriseSound.loop = false;
+surpriseSound.preload = 'auto';
 const lightsOutMusic = new Audio('lights-out-song.mp3?v=51');
 lightsOutMusic.loop = false;
 lightsOutMusic.preload = 'auto';
@@ -200,6 +203,7 @@ let startGestureStart = null;
 let startGestureTapCount = 0;
 let startGestureTapTimer = null;
 let closeByWasNear = false;
+let surpriseSoundPlayed = false;
 
 const spanishExact = {
   'Listen to Mr. Hollow’s instructions.':'Escucha las instrucciones del señor Hollow.',
@@ -302,6 +306,7 @@ function resetGame() {
   stopMemoryLossSound();
   stopCloseBySound();
   stopJumpSound();
+  stopSurpriseSound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   player = {...playerStart};
   boss = {...bossStart};
@@ -370,6 +375,7 @@ function resetGame() {
   memoryFragments = [];
   memorySideTaskActive = false;
   closeByWasNear = false;
+  surpriseSoundPlayed = false;
   powerOn = true;
   document.querySelector('#endModal').hidden = true;
   document.querySelector('#storyModal').hidden = true;
@@ -834,6 +840,7 @@ function endGame(success){
   stopMemoryLossSound();
   stopCloseBySound();
   stopJumpSound();
+  stopSurpriseSound();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
   document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
   document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
@@ -1313,6 +1320,22 @@ function primeJumpSound(){
   const primed=jumpSound.play();
   if(primed)primed.then(()=>{jumpSound.pause();jumpSound.currentTime=0;jumpSound.volume=.9;}).catch(()=>{});
 }
+function playSurpriseSound(){
+  if(!soundToggle.checked||surpriseSoundPlayed)return;
+  surpriseSoundPlayed=true;
+  surpriseSound.currentTime=0;
+  surpriseSound.volume=.95;
+  surpriseSound.play().catch(()=>{});
+}
+function stopSurpriseSound(){
+  surpriseSound.pause();
+  surpriseSound.currentTime=0;
+}
+function primeSurpriseSound(){
+  surpriseSound.volume=0;
+  const primed=surpriseSound.play();
+  if(primed)primed.then(()=>{surpriseSound.pause();surpriseSound.currentTime=0;surpriseSound.volume=.95;}).catch(()=>{});
+}
 function updateCloseBySound(distance){
   if(!running||paused||phase!=='escape'||!soundToggle.checked)return;
   if(!closeByWasNear&&distance<=4){
@@ -1546,7 +1569,7 @@ function fearEvent(time){
   if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
-function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
+function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);if(running&&phase==='escape'&&!hidden&&bossDistance<=7)playSurpriseSound();updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
 window.addEventListener('keydown',event=>{
   if(document.querySelector('#storyModal').hidden===false){
     if(event.code==='Enter'&&!event.repeat){event.preventDefault();advanceDialogue();}
@@ -1615,7 +1638,7 @@ document.querySelector('#repeatButton').addEventListener('click',()=>announce(ob
 document.querySelector('#contrastToggle').addEventListener('change',event=>document.body.classList.toggle('extra-contrast',event.target.checked));
 soundToggle.addEventListener('change',()=>{
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?(phase==='escape'?.065:.018):0,audioContext.currentTime,.08);
-  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopJumpSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
+  if(!soundToggle.checked){stopDangerMusic(true);stopDeathMusic();stopMemoryLossSound();stopCloseBySound();stopJumpSound();stopSurpriseSound();stopLightsOutMusic();stopStoreTrack(true);stopExplorationTrack(true);}
 });
 languageSelect.addEventListener('change',()=>{
   language=languageSelect.value==='es'?'es':'en';
@@ -1632,7 +1655,7 @@ function startGame(){
   gestureControls.hidden=!blindMode;
   if(blindMode)enterGestureFullscreen();
   document.querySelector('#startModal').hidden=true;
-  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();resetGame();
+  ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();primeSurpriseSound();resetGame();
   (blindMode?gesturePad:canvas).focus();
   tone(660,.09,0);setTimeout(()=>tone(880,.14,0),110);
   if(blindMode){
