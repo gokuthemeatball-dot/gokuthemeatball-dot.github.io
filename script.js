@@ -277,6 +277,55 @@ const spanishExact = {
   'Front checkout. Three customers remain. Scan their items, take payment, and do not ask why they are shopping this late.':'La caja principal. Quedan tres clientes. Escanea sus productos, cobra y no preguntes por qué compran tan tarde.'
 };
 
+Object.assign(spanishExact,{
+  'That is enough. Lock the register. The customers always leave before dark.':'Es suficiente. Cierra la caja. Los clientes siempre se van antes de que oscurezca.',
+  'Two spills remain in aisles three and four. Clean them, then report to me. Do not open the loading door.':'Quedan dos derrames en los pasillos tres y cuatro. Límpialos y después ven a informarme. No abras la puerta de carga.',
+  'Customer one buys milk and bread. The register drawer sticks before opening.':'El primer cliente compra leche y pan. El cajón de la caja se atasca antes de abrirse.',
+  'Customer two returns a damaged music box. It plays one note by itself.':'El segundo cliente devuelve una caja de música dañada. Toca una nota por sí sola.',
+  'The final customer pays without speaking, then stares past you toward Mr. Hollow.':'El último cliente paga sin hablar y después mira detrás de ti, hacia el señor Hollow.',
+  'You need five energy to jump.':'Necesitas cinco puntos de energía para saltar.',
+  'Jumped forward. The landing was loud.':'Saltaste hacia adelante. El aterrizaje hizo mucho ruido.',
+  'The dark stockroom is impossible to navigate safely without the guidance map. Find the store plan and marker first.':'Es imposible recorrer el almacén oscuro sin el mapa de guía. Encuentra primero el plano de la tienda y el marcador.',
+  'The cabinet door is ripped open. Mr. Hollow found your hiding place.':'La puerta del armario se abre de golpe. El señor Hollow encontró tu escondite.',
+  'Mr. Hollow hits the door jammer. The aisle shakes, but the pursuit stops for seven seconds.':'El señor Hollow golpea el bloqueador. El pasillo tiembla, pero la persecución se detiene durante siete segundos.',
+  'The beam catches Mr. Hollow’s eyes. He recoils, but now he knows your position.':'El haz alcanza los ojos del señor Hollow. Retrocede, pero ahora conoce tu posición.',
+  'Stun bottle crafted. Press B when Mr. Hollow gets close.':'Botella aturdidora creada. Usa B cuando el señor Hollow esté cerca.',
+  'Guidance map completed. Press M to reveal a route toward your objective.':'Mapa de guía terminado. Usa M para mostrar una ruta hacia tu objetivo.',
+  'Noise lure assembled. Press N to pull Mr. Hollow away from you.':'Señuelo de ruido armado. Usa N para alejar al señor Hollow.',
+  'Flash camera crafted. Press X at close range to blind Mr. Hollow, but the flash reveals your position.':'Cámara con flash creada. Usa X de cerca para cegar al señor Hollow, pero el destello revelará tu posición.',
+  'Door jammer crafted. Press V to place it. Mr. Hollow will be stopped when he crosses that tile.':'Bloqueador de puerta creado. Usa V para colocarlo. Detendrá al señor Hollow cuando pase por ese lugar.',
+  'Scent mask crafted. Press Z for a short stealth window.':'Máscara de olor creada. Usa Z para ocultarte durante unos segundos.',
+  'The guidance map is missing.':'No tienes el mapa de guía.',
+  'Craft a noise lure from an empty can and batteries.':'Crea un señuelo de ruido con una lata vacía y baterías.',
+  'You need an empty bottle and cleaner to craft a stun bottle.':'Necesitas una botella vacía y limpiador para crear una botella aturdidora.',
+  'Direct hit. Mr. Hollow is stunned for nine seconds.':'Impacto directo. El señor Hollow queda aturdido durante nueve segundos.',
+  'The bottle shattered, but Mr. Hollow was too far away.':'La botella se rompió, pero el señor Hollow estaba demasiado lejos.',
+  'Craft a flash camera from a disposable camera and flash cell.':'Crea una cámara con flash usando una cámara desechable y una celda de flash.',
+  'The flash catches Mr. Hollow. He is blinded for six seconds, but now he knows exactly where you are.':'El destello alcanza al señor Hollow. Queda cegado durante seis segundos, pero ahora sabe exactamente dónde estás.',
+  'The camera flashes into an empty aisle. The noise gives away your position.':'La cámara ilumina un pasillo vacío. El ruido revela tu posición.',
+  'Craft a door jammer from a broken handle and duct tape.':'Crea un bloqueador de puerta con un mango roto y cinta adhesiva.',
+  'Craft a scent mask from a rag and coffee grounds.':'Crea una máscara de olor con un trapo y café molido.',
+  'Scent mask active for eighteen seconds. Stay crouched and keep your flashlight off for the best concealment.':'Máscara de olor activa durante dieciocho segundos. Mantente agachado y con la linterna apagada para ocultarte mejor.',
+  'Empty bottle collected. Find cleaner to craft a stun bottle.':'Botella vacía recogida. Encuentra limpiador para crear una botella aturdidora.',
+  'Cleaner collected. Find an empty bottle to craft a stun bottle.':'Limpiador recogido. Encuentra una botella vacía para crear una botella aturdidora.',
+  'Empty can collected. Find batteries to build a noise lure.':'Lata vacía recogida. Encuentra baterías para crear un señuelo de ruido.',
+  'Batteries collected. Find an empty can to build a noise lure.':'Baterías recogidas. Encuentra una lata vacía para crear un señuelo de ruido.',
+  'Disposable camera collected. Find a flash cell to weaponize it.':'Cámara desechable recogida. Encuentra una celda de flash para prepararla.',
+  'Flash cell collected. Find the disposable camera.':'Celda de flash recogida. Encuentra la cámara desechable.',
+  'Broken broom handle collected. Find duct tape for a door jammer.':'Mango de escoba roto recogido. Encuentra cinta adhesiva para crear un bloqueador.',
+  'Duct tape collected. Find a broken handle for a door jammer.':'Cinta adhesiva recogida. Encuentra un mango roto para crear un bloqueador.',
+  'Cleaning rag collected. Find coffee grounds for a scent mask.':'Trapo de limpieza recogido. Encuentra café molido para crear una máscara de olor.',
+  'Coffee grounds collected. Find a cleaning rag for a scent mask.':'Café molido recogido. Encuentra un trapo de limpieza para crear una máscara de olor.',
+  'Crouched. You can move quietly and are harder to see.':'Agachado. Puedes moverte en silencio y es más difícil verte.',
+  'Standing. You move normally again.':'De pie. Vuelves a moverte normalmente.',
+  'Arrows move and turn. Space or J jumps. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.':'Las flechas mueven y giran. Espacio o J salta. H agacha. E interactúa. R come. B lanza la botella aturdidora. M usa el mapa. N coloca el señuelo. X usa la cámara. V coloca el bloqueador. Z usa la máscara. F controla la linterna. P pausa.'
+  ,'A timecard dated 1987. Every employee clocked out except one. The missing name is scratched away.':'Una tarjeta de asistencia de 1987. Todos los empleados marcaron su salida excepto uno. El nombre que falta fue borrado.'
+  ,'A staff photograph shows Mr. Hollow in the same green vest. The photograph is dated forty years ago.':'Una fotografía del personal muestra al señor Hollow con el mismo chaleco verde. La foto tiene cuarenta años.'
+  ,'A damaged training tape says: If the manager learns your route, change it. He remembers repeated footsteps.':'Una cinta de entrenamiento dañada dice: Si el gerente aprende tu ruta, cámbiala. Recuerda los pasos repetidos.'
+  ,'The night ledger already contains your name. It lists every shift you will work for the next thirteen years.':'El registro nocturno ya contiene tu nombre. Enumera cada turno que trabajarás durante los próximos trece años.'
+  ,'Mr. Hollow is watching from the service desk.':'El señor Hollow observa desde el mostrador de servicio.'
+});
+
 function translateText(message){
   if(language!=='es'||!message)return message;
   if(spanishExact[message])return spanishExact[message];
@@ -289,6 +338,23 @@ function translateText(message){
     .replace(/\bnorth\b/gi,'norte').replace(/\bsouth\b/gi,'sur').replace(/\beast\b/gi,'este').replace(/\bwest\b/gi,'oeste')
     .replace(/\bsteps?\b/gi,'pasos').replace(/\bremaining\b/gi,'restantes').replace(/\bleft\b/gi,'restantes')
     .replace(/^Flashlight on\.$/,'Linterna encendida.').replace(/^Flashlight off\.$/,'Linterna apagada.')
+    .replace(/^Serve customers at the front checkout\. (\d+) of 3 served\.$/,'Atiende a los clientes en la caja principal. $1 de 3 atendidos.')
+    .replace(/^Clean the marked spills\. (\d+) remaining\.$/,'Limpia los derrames marcados. Quedan $1.')
+    .replace(/^Recover your lost memories before escaping\. (\d+) remaining\.$/,'Recupera tus recuerdos perdidos antes de escapar. Quedan $1.')
+    .replace(/^Mr\. Hollow carries (\d+) stolen memories?\. Survive until you can confront him\.$/,'El señor Hollow tiene $1 recuerdos robados. Sobrevive hasta poder enfrentarlo.')
+    .replace(/^Spill cleaned\. (\d+) left\.$/,'Derrame limpiado. Quedan $1.')
+    .replace(/^Find the next marked spill\. (\d+) remain\.$/,'Encuentra el siguiente derrame marcado. Quedan $1.')
+    .replace(/^Food packed\. You now carry (\d+) portions?\. Press R to eat anywhere\.$/,'Comida guardada. Ahora llevas $1 porciones. Usa R para comer en cualquier lugar.')
+    .replace(/^You eat one portion\. Energy (\d+)\. (\d+) portions remain\.$/,'Comes una porción. Energía $1. Quedan $2 porciones.')
+    .replace(/^Danger\. Mr\. Hollow is (.+), three steps away\.$/,'Peligro. El señor Hollow está hacia $1, a tres pasos.')
+    .replace(/^The next customer is waiting at checkout, (.+), (\d+) steps away\.$/,'El siguiente cliente espera en la caja, hacia $1, a $2 pasos.')
+    .replace(/^Mystery fragment (\d+) of 4\. /,'Fragmento del misterio $1 de 4. ')
+    .replace(/^Required lost memory is (.+), (\d+) steps away\.$/,'El recuerdo perdido obligatorio está hacia $1, a $2 pasos.')
+    .replace(/^Nothing to use here\. /,'No hay nada que usar aquí. ')
+    .replace(/\bFront checkout\b/g,'Caja principal').replace(/\bStockroom\b/g,'Almacén').replace(/\bLoading bay\b/g,'Zona de carga').replace(/\bBack aisle\b/g,'Pasillo trasero').replace(/\bManager office hall\b/g,'Pasillo de la oficina del gerente')
+    .replace(/\bCheckout\b/g,'Caja').replace(/\bNext spill\b/g,'Siguiente derrame').replace(/\bSpill\b/g,'Derrame').replace(/\bFuse\b/g,'Fusible').replace(/\bBreaker\b/g,'Interruptor').replace(/\bKeycard\b/g,'Tarjeta').replace(/\bExit\b/g,'Salida')
+    .replace(/\bHiding place\b/g,'Escondite').replace(/\bFood\b/g,'Comida').replace(/\bEmpty bottle\b/g,'Botella vacía').replace(/\bCleaner\b/g,'Limpiador').replace(/\bEmpty can\b/g,'Lata vacía').replace(/\bBatteries\b/g,'Baterías').replace(/\bCamera\b/g,'Cámara').replace(/\bFlash cell\b/g,'Celda de flash').replace(/\bHandle\b/g,'Mango').replace(/\bDuct tape\b/g,'Cinta adhesiva').replace(/\bRag\b/g,'Trapo').replace(/\bCoffee\b/g,'Café').replace(/\bMystery fragment\b/g,'Fragmento del misterio').replace(/\bLost memory\b/g,'Recuerdo perdido')
+    .replace(/\bis\b/g,'está').replace(/\bhere\b/g,'aquí').replace(/\bAisle (\d+)\b/g,'Pasillo $1')
     .replace(/^Selected item: /,'Objeto seleccionado: ')
     .replace(/^Using selected item: /,'Usando objeto: ')
     .replace(/^Memory fragment restored\. One chance recovered\. You now have (\d+) chances\. (\d+) lost fragment remains\.$/,'Fragmento de memoria restaurado. Recuperaste una oportunidad. Ahora tienes $1 oportunidades. Queda $2 fragmento perdido.')
@@ -320,6 +386,32 @@ function applyLanguage(){
   document.querySelector('#languageLabel').textContent=es?'Idioma':'Language';
   document.querySelector('#gestureTitle').textContent=es?'MODO DE GESTOS':'GESTURE MODE';
   document.querySelector('#gestureHint').textContent=es?'Usa toda la pantalla como un solo control':'Use the whole screen as one controller';
+  document.querySelector('header .wordmark span').textContent=es?'TURNO NOCTURNO':'NIGHT SHIFT';
+  document.querySelector('header>p').textContent=es?'TERROR DE SUPERVIVENCIA · JUGABLE CON O SIN VISIÓN':'SURVIVAL HORROR · PLAYABLE WITH OR WITHOUT SIGHT';
+  document.querySelector('.game-topbar .label').textContent=es?'OBJETIVO ACTUAL':'CURRENT OBJECTIVE';
+  document.querySelector('.inventory>.label').textContent=es?'INVENTARIO':'INVENTORY';
+  document.querySelector('.action-log .label').textContent=es?'ÚLTIMA ACTUALIZACIÓN':'LAST UPDATE';
+  document.querySelector('.danger-label').textContent=es?'GERENTE DE LA TIENDA':'STORE MANAGER';
+  document.querySelector('.manager-card>p').textContent=es?'Sigue el ruido, la luz y los pasillos alterados. Sus llaves suelen ser la única advertencia que recibes.':'He tracks noise, light, and disturbed aisles. His keys are often the only warning you receive.';
+  document.querySelector('.controls-card>.label').textContent=es?'CONTROLES':'CONTROLS';
+  const controlTranslations=['girar a la izquierda o derecha','avanzar o retroceder','correr hacia adelante','saltar hacia adelante','interactuar, recoger o comer','lanzar botella aturdidora','comer comida guardada','usar mapa de guía','colocar señuelo de ruido','usar cámara con flash','colocar bloqueador de puerta','usar máscara de olor','agacharse y moverse en silencio','linterna','pausa'];
+  document.querySelectorAll('.controls-card div span').forEach((item,index)=>item.textContent=es?controlTranslations[index]:['turn left or right','forward or backward','run forward','jump forward','interact, collect, or eat','throw crafted stun bottle','eat carried food','use crafted guidance map','deploy crafted noise lure','fire crafted flash camera','place crafted door jammer','use crafted scent mask','crouch and move quietly','flashlight','pause'][index]);
+  document.querySelector('#pauseCard strong').textContent=es?'PAUSA':'PAUSED';
+  document.querySelector('#pauseCard span').textContent=es?'Pulsa P para continuar':'Press P to continue';
+  document.querySelector('#compassButton').innerHTML=es?'Brújula de audio <kbd>C</kbd>':'Audio compass <kbd>C</kbd>';
+  document.querySelector('#repeatButton').innerHTML=es?'Repetir objetivo <kbd>Q</kbd>':'Repeat objective <kbd>Q</kbd>';
+  document.querySelector('#closeAccessButton').innerHTML=es?'LISTO <span>→</span>':'DONE <span>→</span>';
+  document.querySelector('#restartButton').innerHTML=es?'INTENTAR DE NUEVO <span>↻</span>':'TRY AGAIN <span>↻</span>';
+  document.querySelector('#fightButton').innerHTML=es?'LUCHAR <span>E · TOCAR</span>':'FIGHT BACK <span>E · TAP</span>';
+  document.querySelector('#battleModal .kicker').textContent=es?'ENFRENTAMIENTO DE MEMORIA':'MEMORY CONFRONTATION';
+  document.querySelector('#battleTitle').textContent=es?'TE TIENE.':'HE HAS YOU.';
+  document.querySelector('#battleModal small').textContent=es?'Usa E o activa este botón repetidamente. Modo de gestos: toca dos veces repetidamente.':'Press E or activate this button repeatedly. Blind gesture mode: double tap repeatedly.';
+  document.querySelector('#storyModal .label').textContent=es?'ANTES DEL CIERRE':'BEFORE CLOSING';
+  document.querySelector('#accessModal .label').textContent=es?'OPCIONES DE JUEGO':'PLAY OPTIONS';
+  document.querySelector('#mobileControlsHelp').textContent=es?'Controles para lector de pantalla. Desliza a la izquierda o derecha para elegir un control y toca dos veces para activarlo. Usa Escuchar para orientarte y Repetir para oír el objetivo actual.':'Screen reader controls. Swipe left or right to choose a control, then double tap to activate it. Use Listen for directional guidance and Repeat for the current objective.';
+  const touchLabels=es?['INTERACTUAR','CORRER','SALTAR','LUZ','AGACHARSE','ESCUCHAR','REPETIR','COMER','CÁMARA','BLOQUEADOR','MÁSCARA']:['INTERACT','RUN','JUMP','LIGHT','CROUCH','LISTEN','REPEAT','EAT','CAMERA','JAMMER','MASK'];
+  document.querySelectorAll('.touch-actions button').forEach((button,index)=>button.textContent=touchLabels[index]);
+  gesturePad.setAttribute('aria-label',es?'Panel de gestos. Desliza hacia arriba y mantén para caminar. Toca una vez y después desliza hacia arriba para correr. Desliza hacia abajo para retroceder. Desliza a los lados para girar. Toca dos veces para interactuar, tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.':'Gesture pad. Swipe and hold up to walk. Tap once, then swipe up and hold to run. Swipe down and hold to move backward. Swipe left or right and hold to turn. Double tap to interact. Triple tap to toggle the flashlight. Two-finger single tap to crouch. Two-finger double tap to eat. Three-finger single tap to jump.');
   updateGestureItemStatus();
   if(running){updateHud();draw();}
 }
@@ -525,38 +617,39 @@ function startIntro(){
 
 function updateHud() {
   objectiveText.textContent = translateText(objective()).replace(/\.$/, '');
-  powerStatus.textContent = `POWER: ${powerOn ? 'ON' : 'OFF'}`;
+  powerStatus.textContent = language==='es'?`ENERGÍA ELÉCTRICA: ${powerOn?'ACTIVA':'APAGADA'}`:`POWER: ${powerOn ? 'ON' : 'OFF'}`;
   powerStatus.style.color = powerOn ? '#c7ff4a' : '#ff414d';
-  energyStatus.textContent = `ENERGY: ${Math.round(energy)}`;
+  energyStatus.textContent = `${language==='es'?'RESISTENCIA':'ENERGY'}: ${Math.round(energy)}`;
   energyStatus.style.color = energy<=20?'#ff414d':energy<=45?'#ffc44a':'#c7ff4a';
-  chanceItem.textContent=`CHANCES ×${Math.max(0,6-catches)}`;
+  chanceItem.textContent=`${language==='es'?'OPORTUNIDADES':'CHANCES'} ×${Math.max(0,6-catches)}`;
   chanceItem.style.color=catches>=5?'#ff414d':catches>=3?'#ffc44a':'';
   const restoredMemories=memoryFragments.filter(fragment=>fragment.recovered).length;
-  memoryItem.textContent=!memoryFragments.length?'MEMORY STABLE':memorySideTaskActive?`MEMORY REQUIRED ${restoredMemories}/${memoryFragments.length}`:'MEMORY FADING';
+  memoryItem.textContent=language==='es'?(!memoryFragments.length?'MEMORIA ESTABLE':memorySideTaskActive?`MEMORIA OBLIGATORIA ${restoredMemories}/${memoryFragments.length}`:'MEMORIA DESVANECIÉNDOSE'):(!memoryFragments.length?'MEMORY STABLE':memorySideTaskActive?`MEMORY REQUIRED ${restoredMemories}/${memoryFragments.length}`:'MEMORY FADING');
   memoryItem.classList.toggle('found',memoryFragments.length>0&&restoredMemories===memoryFragments.length);
-  fuseItem.textContent = `FUSE ${hasFuse ? '●' : '○'}`;
-  keyItem.textContent = `KEYCARD ${hasKey ? '●' : '○'}`;
-  foodItem.textContent=`FOOD ×${foodPortions}`;
-  clueItem.textContent=`MYSTERY ${foundClues.size}/4`;
+  fuseItem.textContent = `${language==='es'?'FUSIBLE':'FUSE'} ${hasFuse ? '●' : '○'}`;
+  keyItem.textContent = `${language==='es'?'TARJETA':'KEYCARD'} ${hasKey ? '●' : '○'}`;
+  foodItem.textContent=`${language==='es'?'COMIDA':'FOOD'} ×${foodPortions}`;
+  clueItem.textContent=`${language==='es'?'MISTERIO':'MYSTERY'} ${foundClues.size}/4`;
   clueItem.classList.toggle('found',foundClues.size>0);
   fuseItem.classList.toggle('found', hasFuse);
   keyItem.classList.toggle('found', hasKey);
-  craftItem.textContent=`STUN BOTTLE ${hasStunBottle?'●':'○'}`;
+  craftItem.textContent=`${language==='es'?'BOTELLA ATURDIDORA':'STUN BOTTLE'} ${hasStunBottle?'●':'○'}`;
   craftItem.classList.toggle('found',hasStunBottle);
-  mapItem.textContent=`MAP ${hasMap?'●':'○'}`;
+  mapItem.textContent=`${language==='es'?'MAPA':'MAP'} ${hasMap?'●':'○'}`;
   mapItem.classList.toggle('found',hasMap);
-  lureItem.textContent=`NOISE LURE ${hasLure?'●':'○'}`;
+  lureItem.textContent=`${language==='es'?'SEÑUELO DE RUIDO':'NOISE LURE'} ${hasLure?'●':'○'}`;
   lureItem.classList.toggle('found',hasLure);
-  cameraItem.textContent=`FLASH CAMERA ${hasFlashCamera?'●':'○'}`;
+  cameraItem.textContent=`${language==='es'?'CÁMARA CON FLASH':'FLASH CAMERA'} ${hasFlashCamera?'●':'○'}`;
   cameraItem.classList.toggle('found',hasFlashCamera);
-  wedgeItem.textContent=`DOOR JAMMER ${hasDoorJammer?'●':'○'}`;
+  wedgeItem.textContent=`${language==='es'?'BLOQUEADOR':'DOOR JAMMER'} ${hasDoorJammer?'●':'○'}`;
   wedgeItem.classList.toggle('found',hasDoorJammer);
-  maskItem.textContent=`SCENT MASK ${hasScentMask?'●':'○'}`;
+  maskItem.textContent=`${language==='es'?'MÁSCARA DE OLOR':'SCENT MASK'} ${hasScentMask?'●':'○'}`;
   maskItem.classList.toggle('found',hasScentMask);
   const distance = manhattan(player, boss);
-  if(phase!=='escape'){dangerStatus.textContent=phase==='customers'?'STORE: OPEN':'SHIFT: NORMAL';dangerStatus.style.color='#c7ff4a';return;}
-  const bossPhase=hasKey?'ENRAGED':powerOn?'HUNTING':'STALKING';
-  dangerStatus.textContent = distance <= 3 ? `${bossPhase}: CRITICAL` : distance <= 7 ? `${bossPhase}: NEAR` : `${bossPhase}: DISTANT`;
+  if(phase!=='escape'){dangerStatus.textContent=language==='es'?(phase==='customers'?'TIENDA: ABIERTA':'TURNO: NORMAL'):(phase==='customers'?'STORE: OPEN':'SHIFT: NORMAL');dangerStatus.style.color='#c7ff4a';return;}
+  const bossPhase=language==='es'?(hasKey?'FURIOSO':powerOn?'CAZANDO':'ACECHANDO'):(hasKey?'ENRAGED':powerOn?'HUNTING':'STALKING');
+  const dangerDistance=language==='es'?(distance<=3?'CRÍTICO':distance<=7?'CERCA':'LEJOS'):(distance<=3?'CRITICAL':distance<=7?'NEAR':'DISTANT');
+  dangerStatus.textContent = `${bossPhase}: ${dangerDistance}`;
   dangerStatus.style.color = distance <= 3 ? '#ff414d' : distance <= 7 ? '#ffc44a' : '#c7ff4a';
 }
 
@@ -804,7 +897,7 @@ function bossStep(time) {
   const bossDelay=Math.max(430,(hasKey?620:powerOn?850:1150)-catches*90-foundClues.size*15);
   if (!running || paused || phase!=='escape' || time-lastBossMove < bossDelay) return;
   lastBossMove = time;
-  if(time<bossStunnedUntil){dangerStatus.textContent='BOSS: STUNNED';dangerStatus.style.color='#54cfff';return;}
+  if(time<bossStunnedUntil){dangerStatus.textContent=language==='es'?'GERENTE: ATURDIDO':'BOSS: STUNNED';dangerStatus.style.color='#54cfff';return;}
   const baseSight=flashlight ? (hasKey?9:6) : (hasKey?5:3);
   const scentMasked = time < scentMaskUntil;
   const seesPlayer = !hidden&&manhattan(player,boss) <= Math.max(scentMasked?1:2,baseSight-(crouching?3:0)-(scentMasked?4:0));
@@ -928,8 +1021,8 @@ function startMemoryBattle(){
   stopDangerMusic(false);
   triggerJumpScare('DON’T LET HIM LOCK IT.',true);
   document.querySelector('#battleModal').hidden=false;
-  document.querySelector('#battleProgress').textContent='BREAK FREE: 0 / 6';
-  document.querySelector('#battleText').textContent=`Mr. Hollow has ${stolenMemories} stolen memory fragment${stolenMemories===1?'':'s'}. He is dragging you toward the locked stockroom. Fight before the final lock turns.`;
+  document.querySelector('#battleProgress').textContent=language==='es'?'LIBÉRATE: 0 / 6':'BREAK FREE: 0 / 6';
+  document.querySelector('#battleText').textContent=language==='es'?`El señor Hollow tiene ${stolenMemories} fragmentos de memoria robados. Te arrastra hacia el almacén cerrado. Lucha antes de que termine de cerrar la última cerradura.`:`Mr. Hollow has ${stolenMemories} stolen memory fragment${stolenMemories===1?'':'s'}. He is dragging you toward the locked stockroom. Fight before the final lock turns.`;
   [42,31,52,27,39,24].forEach((frequency,index)=>setTimeout(()=>{tone(frequency,.5,index%2?-.7:.7);noiseBurst(.35,.12,index%2?-.8:.8);},index*420));
   if(navigator.vibrate)navigator.vibrate([220,80,220,80,400]);
   announce(`Memory confrontation. Mr. Hollow has ${stolenMemories} stolen memories. Press E or activate Fight Back six times before he locks you in.`,true);
@@ -939,7 +1032,7 @@ function startMemoryBattle(){
 function fightBack(){
   if(!battleActive)return;
   battleHits++;
-  document.querySelector('#battleProgress').textContent=`BREAK FREE: ${battleHits} / 6`;
+  document.querySelector('#battleProgress').textContent=`${language==='es'?'LIBÉRATE':'BREAK FREE'}: ${battleHits} / 6`;
   noiseBurst(.18,.14,battleHits%2?-.65:.65);
   tone(90+battleHits*34,.12,battleHits%2?-.5:.5);
   if(navigator.vibrate)navigator.vibrate(70);
@@ -981,9 +1074,9 @@ function endGame(success){
   stopQuestionSound();
   stopStoreSpeakerRecordings();
   if(themeTimer){clearInterval(themeTimer);themeTimer=null;}
-  document.querySelector('#endKicker').textContent=success?'SHIFT SURVIVED':'SHIFT ENDED';
-  document.querySelector('#endTitle').textContent=success?'YOU ESCAPED.':'CAUGHT.';
-  document.querySelector('#endMessage').textContent=success?'The loading door slams behind you. From inside, Mr. Hollow quietly says: “See you tomorrow.”':battleLost?'The stockroom lock turns. The lights outside the door go silent. Mr. Hollow keeps every memory you left behind.':'Mr. Hollow found you between the aisles. Listen, hide, and try a quieter route.';
+  document.querySelector('#endKicker').textContent=language==='es'?(success?'TURNO SUPERADO':'TURNO TERMINADO'):(success?'SHIFT SURVIVED':'SHIFT ENDED');
+  document.querySelector('#endTitle').textContent=language==='es'?(success?'ESCAPASTE.':'ATRAPADO.'):(success?'YOU ESCAPED.':'CAUGHT.');
+  document.querySelector('#endMessage').textContent=language==='es'?(success?'La puerta de carga se cierra de golpe detrás de ti. Desde dentro, el señor Hollow dice en voz baja: «Nos vemos mañana».':battleLost?'La cerradura del almacén gira. Las luces del otro lado se apagan. El señor Hollow conserva todos los recuerdos que dejaste atrás.':'El señor Hollow te encontró entre los pasillos. Escucha, escóndete e intenta una ruta más silenciosa.'):(success?'The loading door slams behind you. From inside, Mr. Hollow quietly says: “See you tomorrow.”':battleLost?'The stockroom lock turns. The lights outside the door go silent. Mr. Hollow keeps every memory you left behind.':'Mr. Hollow found you between the aisles. Listen, hide, and try a quieter route.');
   document.querySelector('#endModal').hidden=false;
   if(!success)playDeathMusic();
   announce(success?'You escaped Aisle 13. Shift survived.':battleLost?'Mr. Hollow locked you in the stockroom. Shift ended.':'Caught by Mr. Hollow. Shift ended.',true);
@@ -1743,7 +1836,8 @@ function triggerJumpScare(text='RUN.',force=false){
   if(!force&&now-lastJumpScare<10000)return;
   lastJumpScare=now;
   const scare=document.querySelector('#jumpScare');
-  document.querySelector('#jumpScareText').textContent=text;
+  const spanishScares={'RUN.':'CORRE.','DON’T MOVE.':'NO TE MUEVAS.','CAUGHT.':'ATRAPADO.','HE FOUND YOU.':'TE ENCONTRÓ.','DON’T LET HIM LOCK IT.':'NO DEJES QUE CIERRE.','THE LOCK TURNS.':'LA CERRADURA GIRA.','YOU TORE FREE.':'TE LIBERASTE.','SOMETHING MOVED.':'ALGO SE MOVIÓ.'};
+  document.querySelector('#jumpScareText').textContent=language==='es'?(spanishScares[text]||text):text;
   scare.hidden=false;
   document.body.classList.add('danger-flash');
   noiseBurst(.55,.22,boss.x>player.x?1:-1);
