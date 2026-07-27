@@ -81,6 +81,7 @@ const fuse = { x: 3, y: 17, name: 'stockroom fuse' };
 const keycard = { x: 28, y: 2, name: 'office keycard' };
 const exit = { x: 30, y: 18, name: 'loading exit' };
 const cleaningSpots = [{x:4,y:3},{x:7,y:3}];
+const mopSpot = {x:9,y:2, name:'mop closet'};
 const checkoutSpot = {x:4,y:2};
 const foodSpots = [{x:3,y:7},{x:10,y:8},{x:23,y:12},{x:28,y:9}];
 const bottleSpot = {x:10,y:2};
@@ -135,6 +136,10 @@ let patrolIndex;
 let facing;
 let phase;
 let cleanedSpots;
+let hasMop;
+let moppingIndex = -1;
+let mopProgress = 0;
+let mopLastDirection = '';
 let themeTimer;
 let catches;
 let energy;
@@ -220,6 +225,8 @@ let gestureRunArmedUntil = 0;
 let activeGesturePointers = new Set();
 let twoFingerTouch = false;
 let threeFingerTouch = false;
+let multiGestureStart = null;
+let multiGestureAction = '';
 let twoFingerTapCount = 0;
 let twoFingerTapTimer = null;
 let storyGestureStart = null;
@@ -458,6 +465,8 @@ function resetGame() {
   phase = 'intro';
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?.018:0,audioContext.currentTime,.25);
   cleanedSpots = new Set();
+  hasMop = false;
+  moppingIndex = -1;mopProgress = 0;mopLastDirection = '';
   catches = 0;
   energy = 100;
   eatenFood = new Set();
@@ -526,7 +535,7 @@ function resetGame() {
 function objective() {
   if (phase === 'intro') return 'Listen to Mr. Hollow’s instructions.';
   if (phase === 'customers') return `Serve customers at the front checkout. ${customersServed} of 3 served.`;
-  if (phase === 'cleaning') return `Clean the marked spills. ${cleaningSpots.length-cleanedSpots.size} remaining.`;
+  if (phase === 'cleaning') return hasMop ? `Mop the marked spills. ${cleaningSpots.length-cleanedSpots.size} remaining.` : 'Get the mop from the supply closet, then clean the marked spills.';
   const lostMemories=memorySideTaskActive?memoryFragments.filter(fragment=>!fragment.recovered).length:0;
   if(lostMemories>0)return `Recover your lost memories before escaping. ${lostMemories} remaining.`;
   if(stolenMemories>0)return `Mr. Hollow carries ${stolenMemories} stolen memor${stolenMemories===1?'y':'ies'}. Survive until you can confront him.`;
@@ -679,11 +688,11 @@ function movePlayer(dx, dy, quiet = false, energyCost = 1) {
   checkCaught();
 }
 
-const facingVectors = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-const facingNames = ['north','east','south','west'];
+const facingVectors = [{x:0,y:-1},{x:1,y:-1},{x:1,y:0},{x:1,y:1},{x:0,y:1},{x:-1,y:1},{x:-1,y:0},{x:-1,y:-1}];
+const facingNames = ['north','north-east','east','south-east','south','south-west','west','north-west'];
 function turnPlayer(amount) {
   if (!running || paused || hidden) return;
-  facing = (facing + amount + 4) % 4;
+  facing = (facing + amount + 8) % 8;
   announce(`Facing ${facingNames[facing]}.`, blindMode);
   tone(260,.035,amount);
   draw();
@@ -748,16 +757,16 @@ function interact() {
   }
   if(phase==='intro')return;
   if (phase === 'cleaning') {
+    if(!hasMop&&manhattan(player,mopSpot)<=1){
+      hasMop=true;pickupSound();announce('Mop collected. Clean the two marked spills with Interact.',true);updateHud();draw();return;
+    }
     const spillIndex=cleaningSpots.findIndex((spot,index)=>!cleanedSpots.has(index)&&manhattan(player,spot)<=1);
     if(spillIndex>=0){
-      cleanedSpots.add(spillIndex);
-      cleaningSound();
-      if(cleanedSpots.size===cleaningSpots.length)beginHorror();
-      else announce(`Spill cleaned. ${cleaningSpots.length-cleanedSpots.size} left.`,false);
-      updateHud();draw();
+      if(!hasMop){announce('You need the mop from the supply closet before you can clean this spill.',true);return;}
+      moppingIndex=spillIndex;mopProgress=0;mopLastDirection='';announce('Mop ready. Scrub left and right repeatedly until the spill is clean.',true);draw();
       return;
     }
-    announce(`Find the next marked spill. ${cleaningSpots.length-cleanedSpots.size} remain.`,true);
+    announce(hasMop?`Find the next marked spill. ${cleaningSpots.length-cleanedSpots.size} remain.`:'The mop is in the supply closet beside the front checkout.',true);
     return;
   }
   const memoryIndex=phase==='escape'&&memorySideTaskActive?memoryFragments.findIndex(fragment=>!fragment.recovered&&manhattan(player,fragment)<=1):-1;
@@ -846,6 +855,18 @@ function interact() {
   draw();
 }
 
+function mopStroke(direction){
+  if(moppingIndex<0)return false;
+  if(direction===mopLastDirection)return true;
+  mopLastDirection=direction;mopProgress++;cleaningSound();
+  if(mopProgress>=6){
+    cleanedSpots.add(moppingIndex);moppingIndex=-1;mopProgress=0;
+    if(cleanedSpots.size===cleaningSpots.length)beginHorror();
+    else announce(`Spill cleaned. ${cleaningSpots.length-cleanedSpots.size} left.`,true);
+  }else announce(`Scrubbing. ${6-mopProgress} strokes remain.`,false);
+  updateHud();draw();return true;
+}
+
 function nearestImportant() {
   const requiredMemories=phase==='escape'&&memorySideTaskActive?memoryFragments.filter(fragment=>!fragment.recovered):[];
   if(requiredMemories.length){
@@ -856,7 +877,10 @@ function nearestImportant() {
   }
   const targets = [];
   if(phase==='customers')targets.push({...checkoutSpot,label:'Checkout'});
-  else if (phase==='cleaning') cleaningSpots.forEach((spot,index)=>{if(!cleanedSpots.has(index))targets.push({...spot,label:'Spill'});});
+  else if (phase==='cleaning') {
+    if(!hasMop) targets.push({...mopSpot,label:'Mop closet'});
+    else cleaningSpots.forEach((spot,index)=>{if(!cleanedSpots.has(index))targets.push({...spot,label:'Spill'});});
+  }
   else if (!hasFuse) targets.push({...fuse,label:'Fuse'});
   else if (!powerOn) targets.push({...fuse,label:'Breaker'});
   else if (!hasKey) targets.push({...keycard,label:'Keycard'});
@@ -884,8 +908,8 @@ function nearestImportant() {
 function audioCompass() {
   if (!running) return;
   const uncleaned=cleaningSpots.find((spot,index)=>!cleanedSpots.has(index));
-  const goal = phase==='customers' ? checkoutSpot : phase==='cleaning' ? uncleaned : !hasFuse || !powerOn ? fuse : !hasKey ? keycard : exit;
-  const goalName = phase==='customers' ? 'Checkout' : phase==='cleaning' ? 'Next spill' : !hasFuse ? 'Fuse' : !powerOn ? 'Breaker' : !hasKey ? 'Keycard' : 'Exit';
+  const goal = phase==='customers' ? checkoutSpot : phase==='cleaning' ? (hasMop?uncleaned:mopSpot) : !hasFuse || !powerOn ? fuse : !hasKey ? keycard : exit;
+  const goalName = phase==='customers' ? 'Checkout' : phase==='cleaning' ? (hasMop?'Next spill':'Mop closet') : !hasFuse ? 'Fuse' : !powerOn ? 'Breaker' : !hasKey ? 'Keycard' : 'Exit';
   const enemyDirection = directionWords(boss.x-player.x,boss.y-player.y);
   const dangerLine=phase!=='escape'?'Mr. Hollow is watching from the service desk.':`Mr. Hollow: ${enemyDirection}, ${manhattan(player,boss)} steps.`;
   announce(`${goalName}: ${directionWords(goal.x-player.x,goal.y-player.y)}, ${manhattan(player,goal)} steps. ${dangerLine}`, true);
@@ -953,7 +977,7 @@ function bossStep(time) {
     spatialCue(boss.x-player.x, distance <= 2 ? 75 : 105);
     if(distance<=4)heartbeatSound(distance);
     if (Math.random() < .18) keyRattle(boss.x-player.x);
-    if(distance<=3&&time-lastJumpScare>11000&&Math.random()<.16)triggerJumpScare('DON’T MOVE.',false);
+    if(distance<=4&&time-lastJumpScare>7500&&Math.random()<.32)triggerJumpScare(distance<=2?'HE FOUND YOU.':'DON’T MOVE.',false);
     if (blindMode && distance === 3) announce(`Danger. Mr. Hollow is ${directionWords(boss.x-player.x,boss.y-player.y)}, three steps away.`,true);
   }
   updateHud();
@@ -1091,9 +1115,13 @@ function draw() {
     if(!wall){ctx.strokeStyle='rgba(105,120,116,.06)';ctx.strokeRect(x*TILE,y*TILE,TILE,TILE);}
     if(wall){ctx.strokeStyle='#3c4947';ctx.strokeRect(x*TILE+2,y*TILE+2,TILE-4,TILE-4);}
   }
+  drawStoreFixtures();
   if(phase==='escape')hideSpots.forEach(h=>drawMarker(h,'#50645f','H'));
-  if(phase==='customers')drawMarker(checkoutSpot,'#7fd9e8',`C${customersServed+1}`);
-  if(phase==='cleaning')cleaningSpots.forEach((spot,index)=>{if(!cleanedSpots.has(index))drawMarker(spot,'#7fd9e8','CLEAN');});
+  if(phase==='customers')drawCheckoutCounter();
+  if(phase==='cleaning'){
+    drawMopCloset();
+    cleaningSpots.forEach((spot,index)=>{if(!cleanedSpots.has(index))drawSpill(spot);});
+  }
   if(phase==='escape')foodSpots.forEach((spot,index)=>{if(!eatenFood.has(index))drawMarker(spot,'#c7ff4a','FOOD');});
   if(phase==='escape'&&!hasBottle)drawMarker(bottleSpot,'#9bc8ff','BOT');
   if(phase==='escape'&&!hasCleaner)drawMarker(cleanerSpot,'#d49bff','SOAP');
@@ -1137,6 +1165,90 @@ function draw() {
   if(jammerSpot)drawMarker(jammerSpot,'#ff9f43','JAM');
   if(performance.now()<flickerUntil){ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(0,0,canvas.width,canvas.height);}
 }
+
+function drawStoreFixtures(){
+  // Each wall run is a stocked shelf rather than an abstract obstacle.
+  ctx.save();
+  walls.forEach(key=>{
+    const [x,y]=key.split(',').map(Number);
+    if(x===0||y===0||x===COLS-1||y===ROWS-1)return;
+    const px=x*TILE,py=y*TILE;
+    ctx.fillStyle='#5b4430';ctx.fillRect(px+3,py+4,TILE-6,TILE-8);
+    ctx.fillStyle='#2b1f18';ctx.fillRect(px+6,py+7,TILE-12,4);ctx.fillRect(px+6,py+19,TILE-12,4);ctx.fillRect(px+6,py+31,TILE-12,3);
+    ['#d4a54b','#7aab78','#c96e58'].forEach((color,index)=>{ctx.fillStyle=color;ctx.fillRect(px+8+index*8,py+9,5,7);ctx.fillRect(px+8+index*8,py+21,5,7);});
+  });
+  ctx.restore();
+}
+function drawCheckoutCounter(){
+  const px=checkoutSpot.x*TILE,py=checkoutSpot.y*TILE;
+  ctx.fillStyle='#573b2c';ctx.fillRect(px-18,py+10,98,27);
+  ctx.fillStyle='#d2b171';ctx.fillRect(px-18,py+10,98,5);
+  ctx.fillStyle='#182121';ctx.fillRect(px+44,py-2,22,17);ctx.fillStyle='#7fd9e8';ctx.fillRect(px+48,py+1,14,8);
+  ctx.fillStyle='#d9d1be';ctx.fillRect(px+7,py+17,25,9);
+  ctx.fillStyle='#e7eee9';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('REGISTER',px-13,py+48);
+}
+function drawMopCloset(){
+  const px=mopSpot.x*TILE,py=mopSpot.y*TILE;
+  ctx.fillStyle='#334842';ctx.fillRect(px+4,py+3,31,34);ctx.fillStyle='#a1b5a6';ctx.fillRect(px+17,py+6,3,27);
+  ctx.strokeStyle='#d6c15f';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px+12,py+31);ctx.lineTo(px+24,py+8);ctx.stroke();
+  if(!hasMop){ctx.fillStyle='#d8e6dd';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('MOP',px+1,py+48);}
+}
+function drawSpill(point){
+  const px=point.x*TILE+20,py=point.y*TILE+22;
+  ctx.fillStyle='rgba(75,167,185,.65)';ctx.beginPath();ctx.ellipse(px,py,16,8,.25,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#b7ecf1';ctx.beginPath();ctx.ellipse(px-6,py-2,5,2,.2,0,Math.PI*2);ctx.fill();
+}
+
+// Sighted players use the map itself as a gesture controller; screen-reader
+// gesture mode remains available and uses its own full-screen pad.
+let visualGestureStart=null,visualGestureTimer=null;
+const visualGesturePointers=new Map();
+function stopVisualGesture(){if(visualGestureTimer){clearInterval(visualGestureTimer);visualGestureTimer=null;}}
+canvas.addEventListener('pointerdown',event=>{
+  if(blindMode||event.pointerType==='mouse')return;
+  canvas.setPointerCapture?.(event.pointerId);
+  visualGesturePointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if(!visualGestureStart)visualGestureStart={x:event.clientX,y:event.clientY,id:event.pointerId,held:false,used:false};
+});
+canvas.addEventListener('pointermove',event=>{
+  if(!visualGestureStart)return;
+  if(moppingIndex>=0&&event.pointerId===visualGestureStart.id){
+    const dx=event.clientX-visualGestureStart.x;
+    if(Math.abs(dx)>22){mopStroke(dx<0?'left':'right');visualGestureStart.x=event.clientX;visualGestureStart.y=event.clientY;}
+    return;
+  }
+  const origin=visualGesturePointers.get(event.pointerId);
+  if(!origin)return;
+  const multiDx=event.clientX-origin.x,multiDy=event.clientY-origin.y;
+  if(visualGesturePointers.size>=3&&multiDy<-42&&!visualGestureStart.used){visualGestureStart.used=true;stopVisualGesture();useMap();return;}
+  if(visualGesturePointers.size>=2&&!visualGestureStart.held&&(multiDy<-42||Math.abs(multiDx)>42)){
+    visualGestureStart.held=true;
+    const action=()=>multiDy<-42?moveFacing(false,true):turnPlayer(multiDx<0?-1:1);
+    action();visualGestureTimer=setInterval(action,310);return;
+  }
+  if(event.pointerId!==visualGestureStart.id||visualGesturePointers.size>1)return;
+  const dx=event.clientX-visualGestureStart.x,dy=event.clientY-visualGestureStart.y;
+  if(visualGestureStart.held||Math.max(Math.abs(dx),Math.abs(dy))<42)return;
+  visualGestureStart.held=true;
+  const action=()=>{
+    if(Math.abs(dx)>Math.abs(dy))turnPlayer(dx<0?-1:1);
+    else moveFacing(dy>0,false);
+  };
+  action();visualGestureTimer=setInterval(action,310);
+});
+function finishVisualGesture(event){
+  if(!visualGestureStart)return;
+  visualGesturePointers.delete(event.pointerId);
+  if(visualGesturePointers.size)return;
+  const dx=event.clientX-visualGestureStart.x,dy=event.clientY-visualGestureStart.y;
+  const wasHeld=visualGestureStart.held||visualGestureStart.used;stopVisualGesture();visualGestureStart=null;
+  if(wasHeld)return;
+  if(Math.hypot(dx,dy)<26)interact();
+  else if(Math.abs(dx)>Math.abs(dy))turnPlayer(dx<0?-1:1);
+  else moveFacing(dy>0,false);
+}
+canvas.addEventListener('pointerup',finishVisualGesture);
+canvas.addEventListener('pointercancel',finishVisualGesture);
 
 function drawMarker(point,color,label){
   const cx=point.x*TILE+20,cy=point.y*TILE+20;
@@ -1333,12 +1445,14 @@ gesturePad.addEventListener('pointerdown',event=>{
     twoFingerTouch=false;
     stopGestureHold();
     gestureStart=null;
+    multiGestureStart={x:event.clientX,y:event.clientY,id:event.pointerId};multiGestureAction='';
     return;
   }
   if(activeGesturePointers.size>=2){
     twoFingerTouch=true;
     stopGestureHold();
     gestureStart=null;
+    multiGestureStart={x:event.clientX,y:event.clientY,id:event.pointerId};multiGestureAction='';
     return;
   }
   gestureStart={x:event.clientX,y:event.clientY,time:performance.now(),id:event.pointerId};
@@ -1346,7 +1460,17 @@ gesturePad.addEventListener('pointerdown',event=>{
   gestureDirection='';gestureWentDown=false;gestureWentUp=false;gestureFirstVertical='';gesturePattern='';
 });
 gesturePad.addEventListener('pointermove',event=>{
-  if(twoFingerTouch||activeGesturePointers.size>1)return;
+  if(activeGesturePointers.size>1&&multiGestureStart){
+    const {dy}=orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y);
+    if(threeFingerTouch&&dy<-38&&multiGestureAction!=='map'){multiGestureAction='map';useMap();}
+    if(twoFingerTouch&&(dy<-38||Math.abs(orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y).dx)>38)&&!multiGestureAction){
+      const {dx}=orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y);
+      multiGestureAction=dy<-38?'run':dx<0?'turn-left':'turn-right';stopGestureHold();gesturePad.classList.add('gesture-active');
+      const action=()=>multiGestureAction==='run'?gestureStep('run'):turnPlayer(multiGestureAction==='turn-left'?-1:1);
+      action();gestureHoldTimer=setInterval(action,330);if(multiGestureAction==='run')announce('Running forward.',false);
+    }
+    return;
+  }
   if(!gestureStart||event.pointerId!==gestureStart.id)return;
   event.preventDefault();
   gestureLast={x:event.clientX,y:event.clientY};
@@ -1404,7 +1528,8 @@ function finishGesture(event){
       threeFingerTouch=false;
       twoFingerTouch=false;
       gestureStart=null;gestureLast=null;gestureDirection='';gesturePattern='';
-      jumpForward();
+      if(multiGestureAction!=='map')jumpForward();
+      multiGestureStart=null;multiGestureAction='';
     }
     return;
   }
@@ -1413,7 +1538,9 @@ function finishGesture(event){
     if(activeGesturePointers.size===0){
       twoFingerTouch=false;
       gestureStart=null;gestureLast=null;gestureDirection='';gesturePattern='';
-      registerTwoFingerTap();
+      stopGestureHold();
+      if(!multiGestureAction)registerTwoFingerTap();
+      multiGestureStart=null;multiGestureAction='';
     }
     return;
   }
@@ -1526,7 +1653,7 @@ function primeMemoryLossSound(){
 function playCloseBySound(){
   if(!soundToggle.checked)return;
   closeBySound.currentTime=0;
-  closeBySound.volume=.9;
+  closeBySound.volume=1;
   closeBySound.play().catch(()=>{});
 }
 function stopCloseBySound(){
@@ -1556,7 +1683,7 @@ function primeJumpSound(){
 function playSurpriseSound(){
   if(!soundToggle.checked)return;
   surpriseSound.currentTime=0;
-  surpriseSound.volume=.95;
+  surpriseSound.volume=1;
   surpriseSound.play().catch(()=>{});
 }
 function stopSurpriseSound(){
@@ -1593,14 +1720,25 @@ function playStoreSpeakerRecording(index,fallbackText){
   const recording=recordings[index];
   visualMessage.textContent=translateText(fallbackText);
   recording.currentTime=0;
-  recording.volume=.95;
+  recording.volume=.68;
+  // The announcement comes from a ceiling speaker ahead, behind, left, or right of the player.
+  ensureAudio();
+  if(!recording._spatialized&&audioContext.createMediaElementSource&&audioContext.createStereoPanner){
+    const source=audioContext.createMediaElementSource(recording),pan=audioContext.createStereoPanner();
+    source.connect(pan).connect(audioContext.destination);recording._speakerPan=pan;recording._spatialized=true;
+  }
+  if(recording._speakerPan){
+    const speaker={x:index===0?5:index===1?27:16,y:index===0?4:index===1?16:1};
+    const dx=speaker.x-player.x,dy=speaker.y-player.y,face=facingVectors[facing];
+    recording._speakerPan.pan.value=Math.max(-1,Math.min(1,(face.x*dy-face.y*dx)/10));
+  }
   recording.play().catch(()=>announce(fallbackText,true));
 }
 function primeStoreSpeakerRecordings(){
   [...storeSpeakerRecordings,...spanishStoreSpeakerRecordings].forEach(recording=>{
     recording.volume=0;
     const primed=recording.play();
-    if(primed)primed.then(()=>{recording.pause();recording.currentTime=0;recording.volume=.95;}).catch(()=>{});
+    if(primed)primed.then(()=>{recording.pause();recording.currentTime=0;recording.volume=.68;}).catch(()=>{});
   });
 }
 function updateSurpriseSound(distance){
@@ -1609,6 +1747,7 @@ function updateSurpriseSound(distance){
   if(visible&&!bossWasVisible){
     bossWasVisible=true;
     playSurpriseSound();
+    if(distance<=5&&performance.now()-lastJumpScare>8000)triggerJumpScare('SOMETHING MOVED.',false);
   }else if(!visible&&(hidden||distance>=9)){
     bossWasVisible=false;
   }
@@ -1843,7 +1982,7 @@ function triggerJumpScare(text='RUN.',force=false){
   noiseBurst(.55,.22,boss.x>player.x?1:-1);
   [48,31,67,26,43].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.32,0),index*58));
   if(navigator.vibrate)navigator.vibrate(force?[120,45,180]:[80,35,110]);
-  setTimeout(()=>{scare.hidden=true;document.body.classList.remove('danger-flash');},force?900:560);
+  setTimeout(()=>{scare.hidden=true;document.body.classList.remove('danger-flash');},force?1050:720);
 }
 
 function fearEvent(time){
@@ -1877,9 +2016,10 @@ window.addEventListener('keydown',event=>{
   }
   if(document.querySelector('#startModal').hidden===false||document.querySelector('#accessModal').hidden===false)return;
   const code=event.code;
+  if(moppingIndex>=0&&(code==='ArrowLeft'||code==='ArrowRight')){event.preventDefault();if(!event.repeat)mopStroke(code==='ArrowLeft'?'left':'right');return;}
   if(code==='ArrowUp'){event.preventDefault();moveFacing(false,event.shiftKey);}
   else if(code==='ArrowDown'){event.preventDefault();moveFacing(true,false);}
-  else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();turnPlayer(code==='ArrowLeft'?-1:1);}
+  else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();turnPlayer((code==='ArrowLeft'?-1:1)*(event.shiftKey?1:2));}
   else if(code==='KeyE'){event.preventDefault();interact();}
   else if(code==='Space'||code==='KeyJ'){event.preventDefault();if(!event.repeat)jumpForward();}
   else if(code==='KeyC'){event.preventDefault();audioCompass();}

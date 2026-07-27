@@ -1,6 +1,6 @@
-.touch-controls{gap:24px}
+.touch-controls{gap:24px;justify-content:flex-end}
 .dpad button,.touch-actions button{min-height:50px;border:1px solid #475351;background:#151d1e;color:#fff;cursor:pointer;touch-action:manipulation}
-.touch-actions{display:grid;grid-template-columns:repeat(4,minmax(62px,1fr));gap:6px;max-width:460px}
+.touch-actions{display:grid;grid-template-columns:minmax(150px,220px);gap:6px;max-width:220px}
 .touch-actions button{font-size:9px;padding:8px}
 .touch-actions .primary-touch{grid-column:span 2;color:var(--acid);font-weight:800;border-color:#70855f}
 .screen-reader-controls .touch-controls{outline:2px solid var(--acid);outline-offset:-2px}
@@ -55,9 +55,7 @@
   .canvas-wrap{min-height:51vw}
   .canvas-wrap canvas{width:100%;height:auto;max-height:none}
   .touch-controls{padding:4px 7px 12px;gap:8px;align-items:stretch}
-  .dpad{flex:0 0 144px;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,52px);gap:4px}
-  .dpad button{min-height:52px}
-  .touch-actions{flex:1;grid-template-columns:repeat(3,minmax(48px,1fr));gap:4px}
+  .touch-actions{margin-left:auto;grid-template-columns:minmax(150px,220px);gap:4px}
   .touch-actions button{min-height:32px;padding:4px;font-size:8px}
   .touch-actions .primary-touch{grid-column:span 2}
   .screen-reader-controls .touch-controls{flex-direction:column}
