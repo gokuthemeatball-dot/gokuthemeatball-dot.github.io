@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=32" />
-  <link rel="stylesheet" href="horror-mobile.css?v=89" />
+  <link rel="stylesheet" href="horror-mobile.css?v=99" />
   <style>.inventory div{flex-wrap:wrap}.inventory{max-width:65%}</style>
 </head>
 <body>
@@ -45,7 +45,7 @@
       </div>
 
       <div class="canvas-wrap" id="canvasWrap">
-        <canvas id="gameCanvas" width="1280" height="800" tabindex="0" role="application" aria-label="Night Shift game map. Left and right arrows turn. Up walks forward. Down walks backward. Shift plus Up runs. E interacts, F controls the flashlight, and C activates the audio compass."></canvas>
+        <canvas id="gameCanvas" width="1280" height="800" tabindex="0" role="application" aria-label="Night Shift game map. Left and right arrows turn. Up walks forward. Down walks backward. Shift plus Up runs. At a locked door, I inserts a key and O opens it. E handles other interactions, F controls the flashlight, and C activates the audio compass."></canvas>
         <div class="screen-vignette" aria-hidden="true"></div>
         <div class="pause-card" id="pauseCard" hidden><strong>PAUSED</strong><span>Press P to continue</span></div>
       </div>
@@ -53,7 +53,7 @@
       <div class="game-bottombar">
         <div class="inventory">
           <span class="label">INVENTORY</span>
-          <div><b id="chanceItem">CHANCES ×6</b><b id="memoryItem">MEMORY STABLE</b><b id="fuseItem">FUSE ○</b><b id="keyItem">KEYCARD ○</b><b id="foodItem">FOOD ×0</b><b id="clueItem">MYSTERY 0/4</b><b id="craftItem">STUN BOTTLE ○</b><b id="mapItem">MAP ○</b><b id="lureItem">NOISE LURE ○</b><b id="cameraItem">FLASH CAMERA ○</b><b id="wedgeItem">DOOR JAMMER ○</b><b id="maskItem">SCENT MASK ○</b></div>
+          <div><b id="chanceItem">CHANCES ×6</b><b id="memoryItem">MEMORY STABLE</b><b id="fuseItem">FUSE ○</b><b id="keyItem">KEYCARD ○</b><b id="doorKeyItem">BRASS KEYS ×0</b><b id="foodItem">FOOD ×0</b><b id="clueItem">MYSTERY 0/4</b><b id="craftItem">STUN BOTTLE ○</b><b id="mapItem">MAP ○</b><b id="lureItem">NOISE LURE ○</b><b id="cameraItem">FLASH CAMERA ○</b><b id="wedgeItem">DOOR JAMMER ○</b><b id="maskItem">SCENT MASK ○</b></div>
         </div>
         <div class="action-log">
           <span class="label">LAST UPDATE</span>
@@ -77,6 +77,8 @@
         <div><kbd>Shift + ↑</kbd><span>run forward</span></div>
         <div><kbd>Space</kbd><span>jump forward</span></div>
         <div><kbd>E</kbd><span>interact, collect, or eat</span></div>
+        <div><kbd>I</kbd><span>insert and turn a door key</span></div>
+        <div><kbd>O</kbd><span>open a door after inserting its key</span></div>
         <div><kbd>B</kbd><span>throw crafted stun bottle</span></div>
         <div><kbd>R</kbd><span>eat carried food</span></div>
         <div><kbd>M</kbd><span>use crafted guidance map</span></div>
@@ -92,14 +94,14 @@
   </main>
 
   <section class="touch-controls" aria-label="Touch game controls" aria-describedby="mobileControlsHelp">
-    <p id="mobileControlsHelp" class="sr-only">Screen reader controls. Swipe left or right to choose a control, then double tap to activate it. Use Listen for directional guidance and Repeat for the current objective.</p>
+    <p id="mobileControlsHelp" class="sr-only">Four-finger door gestures: beside a locked door, swipe four fingers right to insert and turn a key. Swipe four fingers left to open the prepared door.</p>
     <div class="touch-actions" role="group" aria-label="Game action controls">
-      <button id="touchInteract" class="primary-touch" aria-label="Interact, collect, clean, serve, eat, or hide">INTERACT</button>
+      <button id="touchInteract" class="primary-touch" aria-label="Interact, collect, open, clean, serve, eat, or hide">INTERACT</button>
     </div>
   </section>
 
   <section id="gestureControls" class="gesture-controls" aria-label="Full-screen gesture controller" hidden>
-    <div id="gesturePad" class="gesture-pad" role="application" tabindex="0" aria-label="Gesture pad. Swipe and hold up to walk. Tap once, then swipe up and hold to run. Swipe down and hold to move backward. Swipe left or right and hold to turn. Double tap to interact. Triple tap to toggle the flashlight. Two-finger single tap to crouch. Two-finger double tap to eat. Three-finger single tap to jump. Swipe down then up to choose an item. Swipe up then down to use it.">
+    <div id="gesturePad" class="gesture-pad" role="application" tabindex="0" aria-label="Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open it. Swipe and hold up to walk. Swipe down and hold to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.">
       <strong id="gestureTitle">GESTURE MODE</strong>
       <span id="gestureHint">Use the whole screen as one controller</span>
       <b id="gestureItemStatus">SELECTED ITEM: FLASHLIGHT</b>
@@ -180,6 +182,6 @@
   </div>
 
   <p id="liveRegion" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
-  <script src="script.js?v=89"></script>
+  <script src="script.js?v=99"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@ const chanceItem = document.querySelector('#chanceItem');
 const memoryItem = document.querySelector('#memoryItem');
 const fuseItem = document.querySelector('#fuseItem');
 const keyItem = document.querySelector('#keyItem');
+const doorKeyItem = document.querySelector('#doorKeyItem');
 const foodItem = document.querySelector('#foodItem');
 const clueItem = document.querySelector('#clueItem');
 const craftItem = document.querySelector('#craftItem');
@@ -105,6 +106,15 @@ const clueTexts = [
 ];
 const hideSpots = [{x:6,y:2},{x:25,y:17},{x:15,y:9},{x:5,y:11},{x:26,y:8}];
 const patrolPoints = [{x:28,y:3},{x:28,y:15},{x:21,y:17},{x:12,y:17},{x:3,y:12},{x:5,y:3},{x:16,y:9}];
+const doorBlueprints = [
+  {x:11,y:8,orientation:'vertical'},
+  {x:24,y:8,orientation:'vertical'},
+  {x:16,y:16,orientation:'horizontal'}
+];
+const shelfKeyCandidates = [
+  {x:4,y:6},{x:9,y:5},{x:11,y:6},{x:14,y:6},{x:17,y:6},
+  {x:22,y:5},{x:27,y:6},{x:11,y:10},{x:22,y:10},{x:8,y:16}
+];
 
 const walls = new Set();
 for (let x = 0; x < COLS; x++) { walls.add(`${x},0`); walls.add(`${x},${ROWS - 1}`); }
@@ -124,6 +134,9 @@ let boss;
 let hasFuse;
 let powerOn;
 let hasKey;
+let brassKeys;
+let securityDoors;
+let shelfKeys;
 let hidden;
 let crouching;
 let flashlight;
@@ -225,6 +238,7 @@ let gestureRunArmedUntil = 0;
 let activeGesturePointers = new Set();
 let twoFingerTouch = false;
 let threeFingerTouch = false;
+let fourFingerTouch = false;
 let multiGestureStart = null;
 let multiGestureAction = '';
 let twoFingerTapCount = 0;
@@ -242,6 +256,20 @@ let closeByWasNear = false;
 let bossWasVisible = false;
 
 const spanishExact = {
+  'Your shift begins. The front doors lock behind you.':'Tu turno comienza. Las puertas principales se cierran detrás de ti.',
+  'Brass key collected from the shelf.':'Llave de latón recogida del estante.',
+  'The security door is locked. Search the shelves for a brass key.':'La puerta de seguridad está cerrada. Busca una llave de latón en los estantes.',
+  'You insert the brass key and turn the lock. Move forward to push the door open.':'Insertas la llave de latón y giras la cerradura. Avanza para empujar la puerta y abrirla.',
+  'The key is already in the lock. Move forward to push the door open.':'La llave ya está en la cerradura. Avanza para empujar la puerta y abrirla.',
+  'The security door swings open.':'La puerta de seguridad se abre.',
+  'Insert a brass key with Interact before pushing the door.':'Inserta una llave de latón con Interactuar antes de empujar la puerta.',
+  'No locked door is close enough to insert a key.':'No hay una puerta cerrada lo bastante cerca para insertar una llave.',
+  'No prepared door is close enough to open.':'No hay una puerta preparada lo bastante cerca para abrirla.',
+  'Press I to insert a brass key into this door.':'Pulsa I para insertar una llave de latón en esta puerta.',
+  'The key is inserted. Press O to open this door.':'La llave está insertada. Pulsa O para abrir esta puerta.',
+  'Swipe four fingers right to insert a brass key first.':'Desliza cuatro dedos a la derecha para insertar primero una llave de latón.',
+  'The key is inserted. Swipe four fingers left to open the door.':'La llave está insertada. Desliza cuatro dedos a la izquierda para abrir la puerta.',
+  'You insert the brass key and turn the lock. Now swipe four fingers left to open the door.':'Insertas la llave de latón y giras la cerradura. Ahora desliza cuatro dedos a la izquierda para abrir la puerta.',
   'Listen to Mr. Hollow’s instructions.':'Escucha las instrucciones del señor Hollow.',
   'Find the stockroom fuse in the southwest corner.':'Encuentra el fusible del almacén en la esquina suroeste.',
   'Install the fuse at the breaker beside you.':'Instala el fusible en el interruptor que está a tu lado.',
@@ -325,7 +353,7 @@ Object.assign(spanishExact,{
   'Coffee grounds collected. Find a cleaning rag for a scent mask.':'Café molido recogido. Encuentra un trapo de limpieza para crear una máscara de olor.',
   'Crouched. You can move quietly and are harder to see.':'Agachado. Puedes moverte en silencio y es más difícil verte.',
   'Standing. You move normally again.':'De pie. Vuelves a moverte normalmente.',
-  'Arrows move and turn. Space or J jumps. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.':'Las flechas mueven y giran. Espacio o J salta. H agacha. E interactúa. R come. B lanza la botella aturdidora. M usa el mapa. N coloca el señuelo. X usa la cámara. V coloca el bloqueador. Z usa la máscara. F controla la linterna. P pausa.'
+  'Arrows move and turn. Space or J jumps. H crouches. E interacts. I inserts a door key. O opens the prepared door. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.':'Las flechas mueven y giran. Espacio o J salta. H agacha. E interactúa. I inserta una llave. O abre la puerta preparada. R come. B lanza la botella aturdidora. M usa el mapa. N coloca el señuelo. X usa la cámara. V coloca el bloqueador. Z usa la máscara. F controla la linterna. P pausa.'
   ,'A timecard dated 1987. Every employee clocked out except one. The missing name is scratched away.':'Una tarjeta de asistencia de 1987. Todos los empleados marcaron su salida excepto uno. El nombre que falta fue borrado.'
   ,'A staff photograph shows Mr. Hollow in the same green vest. The photograph is dated forty years ago.':'Una fotografía del personal muestra al señor Hollow con el mismo chaleco verde. La foto tiene cuarenta años.'
   ,'A damaged training tape says: If the manager learns your route, change it. He remembers repeated footsteps.':'Una cinta de entrenamiento dañada dice: Si el gerente aprende tu ruta, cámbiala. Recuerda los pasos repetidos.'
@@ -360,7 +388,7 @@ function translateText(message){
     .replace(/^Nothing to use here\. /,'No hay nada que usar aquí. ')
     .replace(/\bFront checkout\b/g,'Caja principal').replace(/\bStockroom\b/g,'Almacén').replace(/\bLoading bay\b/g,'Zona de carga').replace(/\bBack aisle\b/g,'Pasillo trasero').replace(/\bManager office hall\b/g,'Pasillo de la oficina del gerente')
     .replace(/\bCheckout\b/g,'Caja').replace(/\bNext spill\b/g,'Siguiente derrame').replace(/\bSpill\b/g,'Derrame').replace(/\bFuse\b/g,'Fusible').replace(/\bBreaker\b/g,'Interruptor').replace(/\bKeycard\b/g,'Tarjeta').replace(/\bExit\b/g,'Salida')
-    .replace(/\bHiding place\b/g,'Escondite').replace(/\bFood\b/g,'Comida').replace(/\bEmpty bottle\b/g,'Botella vacía').replace(/\bCleaner\b/g,'Limpiador').replace(/\bEmpty can\b/g,'Lata vacía').replace(/\bBatteries\b/g,'Baterías').replace(/\bCamera\b/g,'Cámara').replace(/\bFlash cell\b/g,'Celda de flash').replace(/\bHandle\b/g,'Mango').replace(/\bDuct tape\b/g,'Cinta adhesiva').replace(/\bRag\b/g,'Trapo').replace(/\bCoffee\b/g,'Café').replace(/\bMystery fragment\b/g,'Fragmento del misterio').replace(/\bLost memory\b/g,'Recuerdo perdido')
+    .replace(/\bHiding place\b/g,'Escondite').replace(/\bFood\b/g,'Comida').replace(/\bEmpty bottle\b/g,'Botella vacía').replace(/\bCleaner\b/g,'Limpiador').replace(/\bEmpty can\b/g,'Lata vacía').replace(/\bBatteries\b/g,'Baterías').replace(/\bCamera\b/g,'Cámara').replace(/\bFlash cell\b/g,'Celda de flash').replace(/\bHandle\b/g,'Mango').replace(/\bDuct tape\b/g,'Cinta adhesiva').replace(/\bRag\b/g,'Trapo').replace(/\bCoffee\b/g,'Café').replace(/\bMystery fragment\b/g,'Fragmento del misterio').replace(/\bLost memory\b/g,'Recuerdo perdido').replace(/\bBrass key\b/g,'Llave de latón').replace(/\bLocked security door\b/g,'Puerta de seguridad cerrada')
     .replace(/\bis\b/g,'está').replace(/\bhere\b/g,'aquí').replace(/\bAisle (\d+)\b/g,'Pasillo $1')
     .replace(/^Selected item: /,'Objeto seleccionado: ')
     .replace(/^Using selected item: /,'Usando objeto: ')
@@ -383,6 +411,7 @@ function applyLanguage(){
   document.querySelector('#startAccessButton').textContent=es?'ACCESIBILIDAD':'ACCESSIBILITY';
   document.querySelector('#accessButton').textContent=es?'Accesibilidad':'Accessibility';
   document.querySelector('#helpButton').textContent=es?'Controles':'Controls';
+  installButton.textContent=es?'Instalar aplicación':'Install App';
   document.querySelector('#startDescription').textContent=es?'Un turno nocturno de limpieza aparentemente normal. No hay compañeros, y el gerente nunca parece irse.':'A routine overnight sanitation shift. No customers, no coworkers, and one manager who never seems to leave.';
   document.querySelector('#audienceNote').textContent=es?'Creado para todos. Juega con imágenes, sonido o ambos; todos reciben la misma historia, objetivos y dificultad.':'Built for every player. Play visually, through sound, or with both—every objective, threat, and interaction remains available.';
   document.querySelector('#headphonesNote').textContent=es?'Se recomiendan auriculares para el audio espacial. La narración es opcional.':'Headphones recommended for spatial audio. Narration is optional.';
@@ -401,8 +430,8 @@ function applyLanguage(){
   document.querySelector('.danger-label').textContent=es?'GERENTE DE LA TIENDA':'STORE MANAGER';
   document.querySelector('.manager-card>p').textContent=es?'Sigue el ruido, la luz y los pasillos alterados. Sus llaves suelen ser la única advertencia que recibes.':'He tracks noise, light, and disturbed aisles. His keys are often the only warning you receive.';
   document.querySelector('.controls-card>.label').textContent=es?'CONTROLES':'CONTROLS';
-  const controlTranslations=['girar a la izquierda o derecha','avanzar o retroceder','correr hacia adelante','saltar hacia adelante','interactuar, recoger o comer','lanzar botella aturdidora','comer comida guardada','usar mapa de guía','colocar señuelo de ruido','usar cámara con flash','colocar bloqueador de puerta','usar máscara de olor','agacharse y moverse en silencio','linterna','pausa'];
-  document.querySelectorAll('.controls-card div span').forEach((item,index)=>item.textContent=es?controlTranslations[index]:['turn left or right','forward or backward','run forward','jump forward','interact, collect, or eat','throw crafted stun bottle','eat carried food','use crafted guidance map','deploy crafted noise lure','fire crafted flash camera','place crafted door jammer','use crafted scent mask','crouch and move quietly','flashlight','pause'][index]);
+  const controlTranslations=['girar a la izquierda o derecha','avanzar o retroceder','correr hacia adelante','saltar hacia adelante','interactuar, recoger o comer','insertar y girar una llave','abrir una puerta después de insertar la llave','lanzar botella aturdidora','comer comida guardada','usar mapa de guía','colocar señuelo de ruido','usar cámara con flash','colocar bloqueador de puerta','usar máscara de olor','agacharse y moverse en silencio','linterna','pausa'];
+  document.querySelectorAll('.controls-card div span').forEach((item,index)=>item.textContent=es?controlTranslations[index]:['turn left or right','forward or backward','run forward','jump forward','interact, collect, or eat','insert and turn a door key','open a door after inserting its key','throw crafted stun bottle','eat carried food','use crafted guidance map','deploy crafted noise lure','fire crafted flash camera','place crafted door jammer','use crafted scent mask','crouch and move quietly','flashlight','pause'][index]);
   document.querySelector('#pauseCard strong').textContent=es?'PAUSA':'PAUSED';
   document.querySelector('#pauseCard span').textContent=es?'Pulsa P para continuar':'Press P to continue';
   document.querySelector('#compassButton').innerHTML=es?'Brújula de audio <kbd>C</kbd>':'Audio compass <kbd>C</kbd>';
@@ -415,10 +444,18 @@ function applyLanguage(){
   document.querySelector('#battleModal small').textContent=es?'Usa E o activa este botón repetidamente. Modo de gestos: toca dos veces repetidamente.':'Press E or activate this button repeatedly. Blind gesture mode: double tap repeatedly.';
   document.querySelector('#storyModal .label').textContent=es?'ANTES DEL CIERRE':'BEFORE CLOSING';
   document.querySelector('#accessModal .label').textContent=es?'OPCIONES DE JUEGO':'PLAY OPTIONS';
-  document.querySelector('#mobileControlsHelp').textContent=es?'Controles para lector de pantalla. Desliza a la izquierda o derecha para elegir un control y toca dos veces para activarlo. Usa Escuchar para orientarte y Repetir para oír el objetivo actual.':'Screen reader controls. Swipe left or right to choose a control, then double tap to activate it. Use Listen for directional guidance and Repeat for the current objective.';
+  document.querySelector('#mobileControlsHelp').textContent=es?'Gestos de puerta con cuatro dedos: junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave. Desliza cuatro dedos a la izquierda para abrir la puerta preparada.':'Four-finger door gestures: beside a locked door, swipe four fingers right to insert and turn a key. Swipe four fingers left to open the prepared door.';
+  document.querySelector('.touch-controls').setAttribute('aria-label',es?'Controles táctiles del juego':'Touch game controls');
+  document.querySelector('.touch-actions').setAttribute('aria-label',es?'Controles de acciones del juego':'Game action controls');
+  document.querySelector('#touchInteract').setAttribute('aria-label',es?'Interactuar, recoger, abrir, limpiar, atender, comer u ocultarse':'Interact, collect, open, clean, serve, eat, or hide');
+  canvas.setAttribute('aria-label',es?'Mapa de Night Shift. Ante una puerta cerrada, I inserta una llave y O la abre. E realiza las demás interacciones. Las flechas izquierda y derecha giran, Arriba avanza y Abajo retrocede.':'Night Shift game map. At a locked door, I inserts a key and O opens it. E handles other interactions. Left and right arrows turn, Up moves forward, and Down moves backward.');
+  document.querySelector('.manager-portrait').alt=es?'El señor Hollow, un gerente de supermercado alto y pálido con un viejo chaleco verde y un pesado llavero.':'Mr. Hollow, a tall pale supermarket manager in an old green vest, holding a heavy ring of keys.';
+  document.querySelector('.story-card img').alt=es?'El señor Hollow detrás del mostrador de servicio del supermercado.':'Mr. Hollow standing behind the supermarket service counter.';
+  document.querySelector('.start-art').alt=es?'Un pasillo oscuro de supermercado abandonado con el señor Hollow bajo luces fluorescentes que fallan.':'A dark abandoned supermarket aisle with Mr. Hollow standing beneath failing fluorescent lights.';
   const touchLabels=es?['INTERACTUAR','CORRER','SALTAR','LUZ','AGACHARSE','ESCUCHAR','REPETIR','COMER','CÁMARA','BLOQUEADOR','MÁSCARA']:['INTERACT','RUN','JUMP','LIGHT','CROUCH','LISTEN','REPEAT','EAT','CAMERA','JAMMER','MASK'];
   document.querySelectorAll('.touch-actions button').forEach((button,index)=>button.textContent=touchLabels[index]);
-  gesturePad.setAttribute('aria-label',es?'Panel de gestos. Desliza hacia arriba y mantén para caminar. Toca una vez y después desliza hacia arriba para correr. Desliza hacia abajo para retroceder. Desliza a los lados para girar. Toca dos veces para interactuar, tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.':'Gesture pad. Swipe and hold up to walk. Tap once, then swipe up and hold to run. Swipe down and hold to move backward. Swipe left or right and hold to turn. Double tap to interact. Triple tap to toggle the flashlight. Two-finger single tap to crouch. Two-finger double tap to eat. Three-finger single tap to jump.');
+  gesturePad.setAttribute('aria-label',es?'Panel de gestos. Junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave; desliza cuatro dedos a la izquierda para abrirla. Desliza y mantén hacia arriba para caminar y hacia abajo para retroceder. Toca tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.':'Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open it. Swipe and hold up to walk and down to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.');
+  visualMessage.textContent=translateText(visualMessage.dataset.message||visualMessage.textContent);
   updateGestureItemStatus();
   if(running){updateHud();draw();}
 }
@@ -452,6 +489,12 @@ function resetGame() {
   hasFuse = false;
   powerOn = false;
   hasKey = false;
+  brassKeys = 0;
+  securityDoors = doorBlueprints.map(door=>({...door,open:false,keyInserted:false}));
+  shelfKeys = [...shelfKeyCandidates]
+    .sort(()=>Math.random()-.5)
+    .slice(0,securityDoors.length)
+    .map((spot,index)=>({...spot,id:index,collected:false}));
   hidden = false;
   crouching = false;
   flashlight = true;
@@ -583,6 +626,7 @@ function speakGameMessage(message, allowRetry = true) {
 
 function announce(message, speak = true) {
   const localizedMessage=translateText(message);
+  visualMessage.dataset.message=message;
   if (!localizedMessage || localizedMessage === lastAnnouncement) return;
   lastAnnouncement = localizedMessage;
   liveRegion.textContent = '';
@@ -637,6 +681,8 @@ function updateHud() {
   memoryItem.classList.toggle('found',memoryFragments.length>0&&restoredMemories===memoryFragments.length);
   fuseItem.textContent = `${language==='es'?'FUSIBLE':'FUSE'} ${hasFuse ? '●' : '○'}`;
   keyItem.textContent = `${language==='es'?'TARJETA':'KEYCARD'} ${hasKey ? '●' : '○'}`;
+  doorKeyItem.textContent = `${language==='es'?'LLAVES DE LATÓN':'BRASS KEYS'} ×${brassKeys}`;
+  doorKeyItem.classList.toggle('found',brassKeys>0);
   foodItem.textContent=`${language==='es'?'COMIDA':'FOOD'} ×${foodPortions}`;
   clueItem.textContent=`${language==='es'?'MISTERIO':'MYSTERY'} ${foundClues.size}/4`;
   clueItem.classList.toggle('found',foundClues.size>0);
@@ -662,7 +708,7 @@ function updateHud() {
   dangerStatus.style.color = distance <= 3 ? '#ff414d' : distance <= 7 ? '#ffc44a' : '#c7ff4a';
 }
 
-function movePlayer(dx, dy, quiet = false, energyCost = 1) {
+function movePlayer(dx, dy, quiet = false, energyCost = 1, allowDoorPush = true) {
   if (!running || paused || hidden || battleActive) return;
   const energyActive=phase==='escape';
   if(energyActive&&energy<=0){
@@ -673,6 +719,9 @@ function movePlayer(dx, dy, quiet = false, energyCost = 1) {
     announce('Energy empty. You can still move, but every step is painfully slow. Find food.',true);
   }else if(energyActive&&energy<energyCost){energyCost=Math.max(0,energy);}
   const next = {x:player.x+dx,y:player.y+dy};
+  const closedDoor=closedDoorAt(next.x,next.y);
+  if(closedDoor&&!allowDoorPush){lockedDoorSound();announce(closedDoor.keyInserted?'The key is inserted. Press O to open this door.':'Press I to insert a brass key into this door.',true);return;}
+  if(closedDoor&&!useSecurityDoor(closedDoor,'push'))return;
   if (walls.has(`${next.x},${next.y}`)) {
     announce('Blocked. A shelf or wall is in that direction.', blindMode);
     tone(120, .06, 0);
@@ -697,15 +746,15 @@ function turnPlayer(amount) {
   tone(260,.035,amount);
   draw();
 }
-function moveFacing(backward = false, run = false) {
+function moveFacing(backward = false, run = false, allowDoorPush = true) {
   const vector = facingVectors[facing];
   const dx = vector.x * (backward ? -1 : 1);
   const dy = vector.y * (backward ? -1 : 1);
   const actuallyRunning=run&&!crouching&&energy>0;
-  movePlayer(dx,dy,crouching,actuallyRunning?3:1);
+  movePlayer(dx,dy,crouching,actuallyRunning?3:1,allowDoorPush);
   if (actuallyRunning && running && !paused && !hidden) {
     noiseTurns = 5;
-    movePlayer(dx,dy,false,3);
+    movePlayer(dx,dy,false,3,allowDoorPush);
   }
 }
 function jumpForward(){
@@ -715,7 +764,7 @@ function jumpForward(){
   if(phase==='escape')energy=Math.max(0,energy-5);
   noiseTurns=5;
   playJumpSound();
-  movePlayer(vector.x,vector.y,false,0);
+  movePlayer(vector.x,vector.y,false,0,false);
   announce('Jumped forward. The landing was loud.',blindMode);
 }
 
@@ -729,7 +778,7 @@ function describeTile() {
   }
 }
 
-function interact() {
+function interact(allowDoorAction=true) {
   if(battleActive){fightBack();return;}
   if (!running || paused) return;
   if (phase === 'customers') {
@@ -769,6 +818,16 @@ function interact() {
     announce(hasMop?`Find the next marked spill. ${cleaningSpots.length-cleanedSpots.size} remain.`:'The mop is in the supply closet beside the front checkout.',true);
     return;
   }
+  const shelfKey=phase==='escape'?shelfKeys.find(key=>!key.collected&&manhattan(player,key)<=1):null;
+  if(shelfKey){
+    shelfKey.collected=true;
+    brassKeys++;
+    brassKeyPickupSound();
+    announce('Brass key collected from the shelf.',true);
+    updateHud();draw();return;
+  }
+  const nearbyDoor=phase==='escape'?securityDoors.find(door=>!door.open&&manhattan(player,door)<=1):null;
+  if(allowDoorAction&&nearbyDoor){useSecurityDoor(nearbyDoor,'insert');updateHud();draw();return;}
   const memoryIndex=phase==='escape'&&memorySideTaskActive?memoryFragments.findIndex(fragment=>!fragment.recovered&&manhattan(player,fragment)<=1):-1;
   if(memoryIndex>=0){
     memoryFragments[memoryIndex].recovered=true;
@@ -897,6 +956,8 @@ function nearestImportant() {
   if(phase==='escape'&&!hasTape)targets.push({...tapeSpot,label:'Duct tape'});
   if(phase==='escape'&&!hasRag)targets.push({...ragSpot,label:'Rag'});
   if(phase==='escape'&&!hasCoffee)targets.push({...coffeeSpot,label:'Coffee'});
+  if(phase==='escape')shelfKeys.forEach(key=>{if(!key.collected)targets.push({...key,label:'Brass key'});});
+  if(phase==='escape'&&(brassKeys>0||securityDoors.some(door=>door.keyInserted)))securityDoors.forEach(door=>{if(!door.open)targets.push({...door,label:'Locked security door'});});
   if(phase==='escape')clueSpots.forEach((spot,index)=>{if(!foundClues.has(index))targets.push({...spot,label:'Mystery fragment'});});
   if(phase==='escape'&&memorySideTaskActive)memoryFragments.forEach(fragment=>{if(!fragment.recovered)targets.push({...fragment,label:'Lost memory'});});
   targets.sort((a,b)=>manhattan(player,a)-manhattan(player,b));
@@ -992,7 +1053,7 @@ function findPath(start,target) {
     if(current.x===target.x&&current.y===target.y) break;
     [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
       const next={x:current.x+dx,y:current.y+dy},key=`${next.x},${next.y}`;
-      if(!walls.has(key)&&!came.has(key)){came.set(key,current);queue.push(next);}
+      if(!tileBlocked(next.x,next.y)&&!came.has(key)){came.set(key,current);queue.push(next);}
     });
   }
   const endKey=`${target.x},${target.y}`;
@@ -1116,6 +1177,10 @@ function draw() {
     if(wall){ctx.strokeStyle='#3c4947';ctx.strokeRect(x*TILE+2,y*TILE+2,TILE-4,TILE-4);}
   }
   drawStoreFixtures();
+  if(phase==='escape'){
+    securityDoors.forEach(drawSecurityDoor);
+    shelfKeys.forEach(key=>{if(!key.collected)drawShelfKey(key);});
+  }
   if(phase==='escape')hideSpots.forEach(h=>drawMarker(h,'#50645f','H'));
   if(phase==='customers')drawCheckoutCounter();
   if(phase==='cleaning'){
@@ -1179,6 +1244,38 @@ function drawStoreFixtures(){
   });
   ctx.restore();
 }
+function drawSecurityDoor(door){
+  const px=door.x*TILE,py=door.y*TILE;
+  ctx.save();
+  ctx.fillStyle='#202827';ctx.fillRect(px+2,py+2,TILE-4,TILE-4);
+  ctx.strokeStyle=door.open?'#668076':'#9d733b';ctx.lineWidth=3;ctx.strokeRect(px+3,py+3,TILE-6,TILE-6);
+  if(door.open){
+    ctx.fillStyle='#263532';
+    if(door.orientation==='vertical')ctx.fillRect(px+4,py+5,7,TILE-10);
+    else ctx.fillRect(px+5,py+4,TILE-10,7);
+    ctx.fillStyle='#c7ff4a';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('OPEN',px+9,py+23);
+  }else{
+    const gradient=ctx.createLinearGradient(px,py,px+TILE,py+TILE);
+    gradient.addColorStop(0,'#79512f');gradient.addColorStop(1,'#33251d');
+    ctx.fillStyle=gradient;ctx.fillRect(px+7,py+5,TILE-14,TILE-10);
+    ctx.strokeStyle='#b98b50';ctx.lineWidth=1;ctx.strokeRect(px+10,py+8,TILE-20,TILE-16);
+    ctx.fillStyle='#e2b85f';ctx.beginPath();ctx.arc(px+27,py+21,3,0,Math.PI*2);ctx.fill();
+    if(door.keyInserted){
+      ctx.strokeStyle='#fff0a8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px+27,py+21);ctx.lineTo(px+34,py+17);ctx.stroke();
+      ctx.fillStyle='#c7ff4a';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('PUSH',px+8,py+37);
+    }else{
+      ctx.fillStyle='#ffd978';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('LOCK',px+8,py+37);
+    }
+  }
+  ctx.restore();
+}
+function drawShelfKey(key){
+  const cx=key.x*TILE+20,cy=key.y*TILE+20;
+  ctx.save();ctx.shadowColor='#ffd978';ctx.shadowBlur=9;ctx.strokeStyle='#ffd978';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(cx-5,cy,5,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+11,cy);ctx.lineTo(cx+11,cy+5);ctx.moveTo(cx+6,cy);ctx.lineTo(cx+6,cy+4);ctx.stroke();
+  ctx.shadowBlur=0;ctx.fillStyle='#fff0a8';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('KEY',cx-9,cy+15);ctx.restore();
+}
 function drawCheckoutCounter(){
   const px=checkoutSpot.x*TILE,py=checkoutSpot.y*TILE;
   ctx.fillStyle='#573b2c';ctx.fillRect(px-18,py+10,98,27);
@@ -1202,6 +1299,7 @@ function drawSpill(point){
 // Sighted players use the map itself as a gesture controller; screen-reader
 // gesture mode remains available and uses its own full-screen pad.
 let visualGestureStart=null,visualGestureTimer=null;
+let visualFourFingerActive=false;
 const visualGesturePointers=new Map();
 function stopVisualGesture(){if(visualGestureTimer){clearInterval(visualGestureTimer);visualGestureTimer=null;}}
 canvas.addEventListener('pointerdown',event=>{
@@ -1209,17 +1307,24 @@ canvas.addEventListener('pointerdown',event=>{
   canvas.setPointerCapture?.(event.pointerId);
   visualGesturePointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
   if(!visualGestureStart)visualGestureStart={x:event.clientX,y:event.clientY,id:event.pointerId,held:false,used:false};
+  if(visualGesturePointers.size>=4)visualFourFingerActive=true;
 });
 canvas.addEventListener('pointermove',event=>{
   if(!visualGestureStart)return;
   if(moppingIndex>=0&&event.pointerId===visualGestureStart.id){
+    event.preventDefault();
     const dx=event.clientX-visualGestureStart.x;
-    if(Math.abs(dx)>22){mopStroke(dx<0?'left':'right');visualGestureStart.x=event.clientX;visualGestureStart.y=event.clientY;}
+    if(Math.abs(dx)>22){mopStroke(dx<0?'left':'right');visualGestureStart.used=true;visualGestureStart.x=event.clientX;visualGestureStart.y=event.clientY;}
     return;
   }
   const origin=visualGesturePointers.get(event.pointerId);
   if(!origin)return;
   const multiDx=event.clientX-origin.x,multiDy=event.clientY-origin.y;
+  if(visualFourFingerActive&&!visualGestureStart.used&&Math.abs(multiDx)>48&&Math.abs(multiDx)>Math.abs(multiDy)){
+    visualGestureStart.used=true;stopVisualGesture();
+    useNearbySecurityDoor(multiDx>0?'gesture-insert':'gesture-open');return;
+  }
+  if(visualGesturePointers.size>=4)return;
   if(visualGesturePointers.size>=3&&multiDy<-42&&!visualGestureStart.used){visualGestureStart.used=true;stopVisualGesture();useMap();return;}
   if(visualGesturePointers.size>=2&&!visualGestureStart.held&&(multiDy<-42||Math.abs(multiDx)>42)){
     visualGestureStart.held=true;
@@ -1240,6 +1345,8 @@ function finishVisualGesture(event){
   if(!visualGestureStart)return;
   visualGesturePointers.delete(event.pointerId);
   if(visualGesturePointers.size)return;
+  if(visualFourFingerActive)visualGestureStart.used=true;
+  visualFourFingerActive=false;
   const dx=event.clientX-visualGestureStart.x,dy=event.clientY-visualGestureStart.y;
   const wasHeld=visualGestureStart.held||visualGestureStart.used;stopVisualGesture();visualGestureStart=null;
   if(wasHeld)return;
@@ -1249,6 +1356,10 @@ function finishVisualGesture(event){
 }
 canvas.addEventListener('pointerup',finishVisualGesture);
 canvas.addEventListener('pointercancel',finishVisualGesture);
+canvas.addEventListener('dblclick',event=>{
+  if(blindMode||!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+  event.preventDefault();interact(false);
+});
 
 function drawMarker(point,color,label){
   const cx=point.x*TILE+20,cy=point.y*TILE+20;
@@ -1259,6 +1370,35 @@ function drawMarker(point,color,label){
 function areaName(p){if(p.y<=3)return p.x>=23?'Manager office hall':'Front checkout';if(p.y>=15)return p.x<=9?'Stockroom':p.x>=23?'Loading bay':'Back aisle';return `Aisle ${Math.max(1,Math.floor(p.x/2))}`;}
 function directionWords(dx,dy){const vertical=dy<0?'north':dy>0?'south':'';const horizontal=dx<0?'west':dx>0?'east':'';return vertical&&horizontal?`${vertical}-${horizontal}`:vertical||horizontal||'here';}
 function manhattan(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function closedDoorAt(x,y){return phase==='escape'?securityDoors.find(door=>!door.open&&door.x===x&&door.y===y):null;}
+function tileBlocked(x,y){return walls.has(`${x},${y}`)||Boolean(closedDoorAt(x,y));}
+function useSecurityDoor(door,action){
+  if(!door||door.open)return true;
+  if(action==='push'||action==='open'||action==='gesture-open'){
+    if(!door.keyInserted){
+      lockedDoorSound();
+      announce(brassKeys>0?(action==='open'?'Press I to insert a brass key into this door.':action==='gesture-open'?'Swipe four fingers right to insert a brass key first.':'Insert a brass key with Interact before pushing the door.'):'The security door is locked. Search the shelves for a brass key.',true);
+      draw();return false;
+    }
+    door.open=true;
+    openDoorSound();
+    announce('The security door swings open.',true);
+    updateHud();draw();return true;
+  }
+  if(door.keyInserted){lockedDoorSound();announce(action==='gesture-insert'?'The key is inserted. Swipe four fingers left to open the door.':'The key is already in the lock. Move forward to push the door open.',true);draw();return false;}
+  if(brassKeys<1){lockedDoorSound();announce('The security door is locked. Search the shelves for a brass key.',true);draw();return false;}
+  brassKeys--;
+  door.keyInserted=true;
+  insertKeySound();
+  announce(action==='gesture-insert'?'You insert the brass key and turn the lock. Now swipe four fingers left to open the door.':'You insert the brass key and turn the lock. Move forward to push the door open.',true);
+  updateHud();draw();return false;
+}
+function useNearbySecurityDoor(action){
+  if(!running||paused||phase!=='escape')return;
+  const door=securityDoors.find(item=>!item.open&&manhattan(player,item)<=1);
+  if(!door){announce(action==='insert'?'No locked door is close enough to insert a key.':'No prepared door is close enough to open.',true);return;}
+  useSecurityDoor(door,action);
+}
 function currentGoal(){return !hasFuse||!powerOn?fuse:!hasKey?keycard:exit;}
 
 function ensureAudio(){
@@ -1297,6 +1437,21 @@ function bossFootstepSound(distance,dx){
   if(distance<=6)setTimeout(()=>keyRattle(dx),150);
 }
 function cleaningSound(){noiseBurst(.38,.045,0);tone(540,.12,-.2);setTimeout(()=>noiseBurst(.28,.035,.2),150);setTimeout(()=>tone(880,.11,0),310);}
+function lockedDoorSound(){
+  noiseBurst(.08,.08,0);tone(135,.09,-.15);setTimeout(()=>tone(118,.11,.15),95);
+  if(navigator.vibrate)navigator.vibrate([45,35,65]);
+}
+function openDoorSound(){
+  noiseBurst(.42,.07,.2);setTimeout(()=>tone(92,.3,.1),45);setTimeout(()=>tone(150,.14,-.1),170);
+  if(navigator.vibrate)navigator.vibrate(55);
+}
+function insertKeySound(){
+  keyRattle(0);setTimeout(()=>tone(390,.07,-.2),125);setTimeout(()=>tone(210,.11,.2),205);
+  if(navigator.vibrate)navigator.vibrate([35,30,55]);
+}
+function brassKeyPickupSound(){
+  [980,1320,1760].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.06,index===0?-.3:index===2?.3:0),index*65));
+}
 function flashlightSound(){noiseBurst(.025,.06,0);tone(flashlight?1250:480,.035,0);setTimeout(()=>tone(flashlight?760:260,.045,0),38);}
 function toggleFlashlight(){
   flashlight=!flashlight;
@@ -1440,6 +1595,15 @@ gesturePad.addEventListener('pointerdown',event=>{
   event.preventDefault();
   gesturePad.setPointerCapture?.(event.pointerId);
   activeGesturePointers.add(event.pointerId);
+  if(activeGesturePointers.size>=4){
+    fourFingerTouch=true;
+    threeFingerTouch=false;
+    twoFingerTouch=false;
+    stopGestureHold();
+    gestureStart=null;
+    multiGestureStart={x:event.clientX,y:event.clientY,id:event.pointerId};multiGestureAction='';
+    return;
+  }
   if(activeGesturePointers.size>=3){
     threeFingerTouch=true;
     twoFingerTouch=false;
@@ -1461,7 +1625,14 @@ gesturePad.addEventListener('pointerdown',event=>{
 });
 gesturePad.addEventListener('pointermove',event=>{
   if(activeGesturePointers.size>1&&multiGestureStart){
-    const {dy}=orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y);
+    const {dx,dy}=orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y);
+    if(fourFingerTouch){
+      if(!multiGestureAction&&Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)){
+        multiGestureAction=dx>0?'door-insert':'door-open';
+        useNearbySecurityDoor(dx>0?'gesture-insert':'gesture-open');
+      }
+      return;
+    }
     if(threeFingerTouch&&dy<-38&&multiGestureAction!=='map'){multiGestureAction='map';useMap();}
     if(twoFingerTouch&&(dy<-38||Math.abs(orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y).dx)>38)&&!multiGestureAction){
       const {dx}=orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y);
@@ -1476,6 +1647,17 @@ gesturePad.addEventListener('pointermove',event=>{
   gestureLast={x:event.clientX,y:event.clientY};
   const rawDx=event.clientX-gestureStart.x,rawDy=event.clientY-gestureStart.y;
   const {dx,dy}=orientedGestureDelta(rawDx,rawDy);
+  if(moppingIndex>=0){
+    stopGestureHold();
+    if(Math.abs(dx)>22){
+      mopStroke(dx<0?'left':'right');
+      gesturePattern='mopping';
+      gestureStart.x=event.clientX;
+      gestureStart.y=event.clientY;
+      gestureLast={x:event.clientX,y:event.clientY};
+    }
+    return;
+  }
   if(!gestureFirstVertical&&Math.abs(dy)>45)gestureFirstVertical=dy>0?'down':'up';
   if(gestureFirstVertical==='down'&&dy<-28)gesturePattern='down-up';
   if(gestureFirstVertical==='up'&&dy>28)gesturePattern='up-down';
@@ -1522,6 +1704,15 @@ function registerTwoFingerTap(){
 }
 function finishGesture(event){
   activeGesturePointers.delete(event.pointerId);
+  if(fourFingerTouch){
+    event.preventDefault();
+    if(activeGesturePointers.size===0){
+      fourFingerTouch=false;threeFingerTouch=false;twoFingerTouch=false;
+      gestureStart=null;gestureLast=null;gestureDirection='';gesturePattern='';
+      stopGestureHold();multiGestureStart=null;multiGestureAction='';
+    }
+    return;
+  }
   if(threeFingerTouch){
     event.preventDefault();
     if(activeGesturePointers.size===0){
@@ -1718,6 +1909,7 @@ function playStoreSpeakerRecording(index,fallbackText){
   stopStoreSpeakerRecordings();
   const recordings=language==='es'?spanishStoreSpeakerRecordings:storeSpeakerRecordings;
   const recording=recordings[index];
+  visualMessage.dataset.message=fallbackText;
   visualMessage.textContent=translateText(fallbackText);
   recording.currentTime=0;
   recording.volume=.68;
@@ -2017,10 +2209,12 @@ window.addEventListener('keydown',event=>{
   if(document.querySelector('#startModal').hidden===false||document.querySelector('#accessModal').hidden===false)return;
   const code=event.code;
   if(moppingIndex>=0&&(code==='ArrowLeft'||code==='ArrowRight')){event.preventDefault();if(!event.repeat)mopStroke(code==='ArrowLeft'?'left':'right');return;}
-  if(code==='ArrowUp'){event.preventDefault();moveFacing(false,event.shiftKey);}
-  else if(code==='ArrowDown'){event.preventDefault();moveFacing(true,false);}
+  if(code==='ArrowUp'){event.preventDefault();moveFacing(false,event.shiftKey,false);}
+  else if(code==='ArrowDown'){event.preventDefault();moveFacing(true,false,false);}
   else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();turnPlayer((code==='ArrowLeft'?-1:1)*(event.shiftKey?1:2));}
-  else if(code==='KeyE'){event.preventDefault();interact();}
+  else if(code==='KeyE'){event.preventDefault();interact(false);}
+  else if(code==='KeyI'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('insert');}
+  else if(code==='KeyO'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('open');}
   else if(code==='Space'||code==='KeyJ'){event.preventDefault();if(!event.repeat)jumpForward();}
   else if(code==='KeyC'){event.preventDefault();audioCompass();}
   else if(code==='KeyQ'){event.preventDefault();announce(objective(),true);}
@@ -2174,7 +2368,7 @@ document.querySelector('#accessModal').addEventListener('keydown',event=>{
   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
 });
-document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
+document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. I inserts a door key. O opens the prepared door. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
 window.addEventListener('beforeinstallprompt',event=>{
   event.preventDefault();
   deferredInstallPrompt=event;
