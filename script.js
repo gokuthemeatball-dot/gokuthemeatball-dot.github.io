@@ -84,19 +84,19 @@ const exit = { x: 30, y: 18, name: 'loading exit' };
 const cleaningSpots = [{x:4,y:3},{x:7,y:3}];
 const mopSpot = {x:9,y:2, name:'mop closet'};
 const checkoutSpot = {x:4,y:2};
-const foodSpots = [{x:3,y:7},{x:10,y:8},{x:23,y:12},{x:28,y:9}];
-const bottleSpot = {x:10,y:2};
-const cleanerSpot = {x:15,y:8};
-const paperSpot = {x:18,y:8};
-const markerSpot = {x:23,y:3};
-const canSpot = {x:9,y:12};
-const batterySpot = {x:28,y:14};
-const cameraSpot = {x:3,y:10};
-const flashCellSpot = {x:20,y:2};
-const handleSpot = {x:11,y:16};
+const foodSpots = [{x:5,y:4},{x:8,y:5},{x:18,y:4},{x:20,y:15}];
+const bottleSpot = {x:6,y:4};
+const cleanerSpot = {x:18,y:5};
+const paperSpot = {x:19,y:4};
+const markerSpot = {x:20,y:5};
+const canSpot = {x:5,y:9};
+const batterySpot = {x:25,y:11};
+const cameraSpot = {x:6,y:14};
+const flashCellSpot = {x:20,y:9};
+const handleSpot = {x:10,y:17};
 const tapeSpot = {x:29,y:6};
-const ragSpot = {x:18,y:12};
-const coffeeSpot = {x:6,y:7};
+const ragSpot = {x:18,y:14};
+const coffeeSpot = {x:7,y:9};
 const clueSpots = [{x:2,y:15},{x:15,y:2},{x:22,y:16},{x:29,y:11}];
 const clueTexts = [
   'A timecard dated 1987. Every employee clocked out except one. The missing name is scratched away.',
@@ -115,8 +115,10 @@ const doorBlueprints = [
   {x:16,y:16,orientation:'horizontal'}
 ];
 const shelfKeyCandidates = [
-  {x:4,y:4},{x:7,y:5},{x:12,y:4},{x:13,y:6},{x:17,y:4},
-  {x:21,y:5},{x:25,y:4},{x:26,y:6},{x:12,y:10},{x:21,y:10}
+  {x:4,y:5},{x:7,y:4},{x:12,y:3},{x:13,y:5},{x:12,y:7},{x:13,y:7},
+  {x:17,y:5},{x:21,y:4},{x:25,y:3},{x:26,y:5},{x:25,y:7},{x:26,y:7},
+  {x:4,y:10},{x:8,y:9},{x:12,y:11},{x:13,y:13},{x:17,y:10},{x:21,y:9},
+  {x:25,y:10},{x:26,y:12},{x:4,y:15},{x:8,y:14},{x:17,y:15},{x:21,y:14}
 ];
 
 const walls = new Set();
