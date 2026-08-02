@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=32" />
-  <link rel="stylesheet" href="horror-mobile.css?v=102" />
+  <link rel="stylesheet" href="horror-mobile.css?v=103" />
   <style>.inventory div{flex-wrap:wrap}.inventory{max-width:65%}</style>
 </head>
 <body>
@@ -45,7 +45,7 @@
       </div>
 
       <div class="canvas-wrap" id="canvasWrap">
-        <canvas id="gameCanvas" width="1280" height="800" tabindex="0" role="application" aria-label="Night Shift game map. Left and right arrows turn. Up walks forward. Down walks backward. Shift plus Up runs. At a locked door, I inserts a key and O opens it. E handles other interactions, F controls the flashlight, and C activates the audio compass."></canvas>
+        <canvas id="gameCanvas" width="1280" height="800" tabindex="0" role="application" aria-label="Night Shift game map. Left and right arrows turn. Up walks forward. Down walks backward. Shift plus Up runs. At a security door, I inserts a key, O opens it, and C closes it. E handles other interactions, F controls the flashlight, and L activates the audio compass."></canvas>
         <div class="screen-vignette" aria-hidden="true"></div>
         <div class="pause-card" id="pauseCard" hidden><strong>PAUSED</strong><span>Press P to continue</span></div>
       </div>
@@ -79,6 +79,7 @@
         <div><kbd>E</kbd><span>interact, collect, or eat</span></div>
         <div><kbd>I</kbd><span>insert and turn a door key</span></div>
         <div><kbd>O</kbd><span>open a door after inserting its key</span></div>
+        <div><kbd>C</kbd><span>close an open security door</span></div>
         <div><kbd>B</kbd><span>throw crafted stun bottle</span></div>
         <div><kbd>R</kbd><span>eat carried food</span></div>
         <div><kbd>M</kbd><span>use crafted guidance map</span></div>
@@ -94,14 +95,14 @@
   </main>
 
   <section class="touch-controls" aria-label="Touch game controls" aria-describedby="mobileControlsHelp">
-    <p id="mobileControlsHelp" class="sr-only">Four-finger door gestures: beside a locked door, swipe four fingers right to insert and turn a key. Swipe four fingers left to open the prepared door.</p>
+    <p id="mobileControlsHelp" class="sr-only">Four-finger door gestures: beside a locked door, swipe four fingers right to insert and turn a key. Swipe four fingers left to open or close the door.</p>
     <div class="touch-actions" role="group" aria-label="Game action controls">
       <button id="touchInteract" class="primary-touch" aria-label="Interact, collect, open, clean, serve, eat, or hide">INTERACT</button>
     </div>
   </section>
 
   <section id="gestureControls" class="gesture-controls" aria-label="Full-screen gesture controller" hidden>
-    <div id="gesturePad" class="gesture-pad" role="application" tabindex="0" aria-label="Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open it. Swipe and hold up to walk. Swipe down and hold to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.">
+    <div id="gesturePad" class="gesture-pad" role="application" tabindex="0" aria-label="Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open or close it. Swipe and hold up to walk. Swipe down and hold to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.">
       <strong id="gestureTitle">GESTURE MODE</strong>
       <span id="gestureHint">Use the whole screen as one controller</span>
       <b id="gestureItemStatus">SELECTED ITEM: FLASHLIGHT</b>
@@ -166,7 +167,7 @@
           <option value="es">Español</option>
         </select>
       </label>
-      <button id="compassButton" type="button">Audio compass <kbd>C</kbd></button>
+      <button id="compassButton" type="button">Audio compass <kbd>L</kbd></button>
       <button id="repeatButton" type="button">Repeat objective <kbd>Q</kbd></button>
       <button id="closeAccessButton" type="button">DONE <span>→</span></button>
     </div>
@@ -182,6 +183,6 @@
   </div>
 
   <p id="liveRegion" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
-  <script src="script.js?v=102"></script>
+  <script src="script.js?v=103"></script>
 </body>
 </html>

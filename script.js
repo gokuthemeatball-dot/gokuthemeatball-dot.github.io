@@ -270,9 +270,13 @@ const spanishExact = {
   'You insert the brass key and turn the lock. Move forward to push the door open.':'Insertas la llave de latón y giras la cerradura. Avanza para empujar la puerta y abrirla.',
   'The key is already in the lock. Move forward to push the door open.':'La llave ya está en la cerradura. Avanza para empujar la puerta y abrirla.',
   'The security door swings open.':'La puerta de seguridad se abre.',
+  'The security door closes. Mr. Hollow cannot cross it.':'La puerta de seguridad se cierra. El señor Hollow no puede atravesarla.',
+  'Mr. Hollow is in the doorway. You cannot close it yet.':'El señor Hollow está en la puerta. Todavía no puedes cerrarla.',
   'Insert a brass key with Interact before pushing the door.':'Inserta una llave de latón con Interactuar antes de empujar la puerta.',
   'No locked door is close enough to insert a key.':'No hay una puerta cerrada lo bastante cerca para insertar una llave.',
   'No prepared door is close enough to open.':'No hay una puerta preparada lo bastante cerca para abrirla.',
+  'No open door is close enough to close.':'No hay una puerta abierta lo bastante cerca para cerrarla.',
+  'No security door is close enough to open or close.':'No hay una puerta de seguridad lo bastante cerca para abrirla o cerrarla.',
   'Press I to insert a brass key into this door.':'Pulsa I para insertar una llave de latón en esta puerta.',
   'The key is inserted. Press O to open this door.':'La llave está insertada. Pulsa O para abrir esta puerta.',
   'Swipe four fingers right to insert a brass key first.':'Desliza cuatro dedos a la derecha para insertar primero una llave de latón.',
@@ -363,7 +367,7 @@ Object.assign(spanishExact,{
   'Coffee grounds collected. Find a cleaning rag for a scent mask.':'Café molido recogido. Encuentra un trapo de limpieza para crear una máscara de olor.',
   'Crouched. You can move quietly and are harder to see.':'Agachado. Puedes moverte en silencio y es más difícil verte.',
   'Standing. You move normally again.':'De pie. Vuelves a moverte normalmente.',
-  'Arrows move and turn. Space or J jumps. H crouches. E interacts. I inserts a door key. O opens the prepared door. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.':'Las flechas mueven y giran. Espacio o J salta. H agacha. E interactúa. I inserta una llave. O abre la puerta preparada. R come. B lanza la botella aturdidora. M usa el mapa. N coloca el señuelo. X usa la cámara. V coloca el bloqueador. Z usa la máscara. F controla la linterna. P pausa.'
+  'Arrows move and turn. Space or J jumps. H crouches. E interacts. I inserts a door key. O opens the prepared door. C closes an open security door. L activates the audio compass. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.':'Las flechas mueven y giran. Espacio o J salta. H agacha. E interactúa. I inserta una llave. O abre la puerta preparada. C cierra una puerta de seguridad abierta. L activa la brújula de audio. R come. B lanza la botella aturdidora. M usa el mapa. N coloca el señuelo. X usa la cámara. V coloca el bloqueador. Z usa la máscara. F controla la linterna. P pausa.'
   ,'A timecard dated 1987. Every employee clocked out except one. The missing name is scratched away.':'Una tarjeta de asistencia de 1987. Todos los empleados marcaron su salida excepto uno. El nombre que falta fue borrado.'
   ,'A staff photograph shows Mr. Hollow in the same green vest. The photograph is dated forty years ago.':'Una fotografía del personal muestra al señor Hollow con el mismo chaleco verde. La foto tiene cuarenta años.'
   ,'A damaged training tape says: If the manager learns your route, change it. He remembers repeated footsteps.':'Una cinta de entrenamiento dañada dice: Si el gerente aprende tu ruta, cámbiala. Recuerda los pasos repetidos.'
@@ -440,11 +444,11 @@ function applyLanguage(){
   document.querySelector('.danger-label').textContent=es?'GERENTE DE LA TIENDA':'STORE MANAGER';
   document.querySelector('.manager-card>p').textContent=es?'Sigue el ruido, la luz y los pasillos alterados. Sus llaves suelen ser la única advertencia que recibes.':'He tracks noise, light, and disturbed aisles. His keys are often the only warning you receive.';
   document.querySelector('.controls-card>.label').textContent=es?'CONTROLES':'CONTROLS';
-  const controlTranslations=['girar a la izquierda o derecha','avanzar o retroceder','correr hacia adelante','saltar hacia adelante','interactuar, recoger o comer','insertar y girar una llave','abrir una puerta después de insertar la llave','lanzar botella aturdidora','comer comida guardada','usar mapa de guía','colocar señuelo de ruido','usar cámara con flash','colocar bloqueador de puerta','usar máscara de olor','agacharse y moverse en silencio','linterna','pausa'];
-  document.querySelectorAll('.controls-card div span').forEach((item,index)=>item.textContent=es?controlTranslations[index]:['turn left or right','forward or backward','run forward','jump forward','interact, collect, or eat','insert and turn a door key','open a door after inserting its key','throw crafted stun bottle','eat carried food','use crafted guidance map','deploy crafted noise lure','fire crafted flash camera','place crafted door jammer','use crafted scent mask','crouch and move quietly','flashlight','pause'][index]);
+  const controlTranslations=['girar a la izquierda o derecha','avanzar o retroceder','correr hacia adelante','saltar hacia adelante','interactuar, recoger o comer','insertar y girar una llave','abrir una puerta después de insertar la llave','cerrar una puerta de seguridad abierta','lanzar botella aturdidora','comer comida guardada','usar mapa de guía','colocar señuelo de ruido','usar cámara con flash','colocar bloqueador de puerta','usar máscara de olor','agacharse y moverse en silencio','linterna','pausa'];
+  document.querySelectorAll('.controls-card div span').forEach((item,index)=>item.textContent=es?controlTranslations[index]:['turn left or right','forward or backward','run forward','jump forward','interact, collect, or eat','insert and turn a door key','open a door after inserting its key','close an open security door','throw crafted stun bottle','eat carried food','use crafted guidance map','deploy crafted noise lure','fire crafted flash camera','place crafted door jammer','use crafted scent mask','crouch and move quietly','flashlight','pause'][index]);
   document.querySelector('#pauseCard strong').textContent=es?'PAUSA':'PAUSED';
   document.querySelector('#pauseCard span').textContent=es?'Pulsa P para continuar':'Press P to continue';
-  document.querySelector('#compassButton').innerHTML=es?'Brújula de audio <kbd>C</kbd>':'Audio compass <kbd>C</kbd>';
+  document.querySelector('#compassButton').innerHTML=es?'Brújula de audio <kbd>L</kbd>':'Audio compass <kbd>L</kbd>';
   document.querySelector('#repeatButton').innerHTML=es?'Repetir objetivo <kbd>Q</kbd>':'Repeat objective <kbd>Q</kbd>';
   document.querySelector('#closeAccessButton').innerHTML=es?'LISTO <span>→</span>':'DONE <span>→</span>';
   document.querySelector('#restartButton').innerHTML=es?'INTENTAR DE NUEVO <span>↻</span>':'TRY AGAIN <span>↻</span>';
@@ -454,17 +458,17 @@ function applyLanguage(){
   document.querySelector('#battleModal small').textContent=es?'Usa E o activa este botón repetidamente. Modo de gestos: toca dos veces repetidamente.':'Press E or activate this button repeatedly. Blind gesture mode: double tap repeatedly.';
   document.querySelector('#storyModal .label').textContent=es?'ANTES DEL CIERRE':'BEFORE CLOSING';
   document.querySelector('#accessModal .label').textContent=es?'OPCIONES DE JUEGO':'PLAY OPTIONS';
-  document.querySelector('#mobileControlsHelp').textContent=es?'Gestos de puerta con cuatro dedos: junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave. Desliza cuatro dedos a la izquierda para abrir la puerta preparada.':'Four-finger door gestures: beside a locked door, swipe four fingers right to insert and turn a key. Swipe four fingers left to open the prepared door.';
+  document.querySelector('#mobileControlsHelp').textContent=es?'Gestos de puerta con cuatro dedos: junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave. Desliza cuatro dedos a la izquierda para abrir o cerrar la puerta.':'Four-finger door gestures: beside a locked door, swipe four fingers right to insert and turn a key. Swipe four fingers left to open or close the door.';
   document.querySelector('.touch-controls').setAttribute('aria-label',es?'Controles táctiles del juego':'Touch game controls');
   document.querySelector('.touch-actions').setAttribute('aria-label',es?'Controles de acciones del juego':'Game action controls');
   document.querySelector('#touchInteract').setAttribute('aria-label',es?'Interactuar, recoger, abrir, limpiar, atender, comer u ocultarse':'Interact, collect, open, clean, serve, eat, or hide');
-  canvas.setAttribute('aria-label',es?'Mapa de Night Shift. Ante una puerta cerrada, I inserta una llave y O la abre. E realiza las demás interacciones. Las flechas izquierda y derecha giran, Arriba avanza y Abajo retrocede.':'Night Shift game map. At a locked door, I inserts a key and O opens it. E handles other interactions. Left and right arrows turn, Up moves forward, and Down moves backward.');
+  canvas.setAttribute('aria-label',es?'Mapa de Night Shift. Ante una puerta de seguridad, I inserta una llave, O la abre y C la cierra. L activa la brújula de audio. E realiza las demás interacciones.':'Night Shift game map. At a security door, I inserts a key, O opens it, and C closes it. L activates the audio compass. E handles other interactions.');
   document.querySelector('.manager-portrait').alt=es?'El señor Hollow, un gerente de supermercado alto y pálido con un viejo chaleco verde y un pesado llavero.':'Mr. Hollow, a tall pale supermarket manager in an old green vest, holding a heavy ring of keys.';
   document.querySelector('.story-card img').alt=es?'El señor Hollow detrás del mostrador de servicio del supermercado.':'Mr. Hollow standing behind the supermarket service counter.';
   document.querySelector('.start-art').alt=es?'Un pasillo oscuro de supermercado abandonado con el señor Hollow bajo luces fluorescentes que fallan.':'A dark abandoned supermarket aisle with Mr. Hollow standing beneath failing fluorescent lights.';
   const touchLabels=es?['INTERACTUAR','CORRER','SALTAR','LUZ','AGACHARSE','ESCUCHAR','REPETIR','COMER','CÁMARA','BLOQUEADOR','MÁSCARA']:['INTERACT','RUN','JUMP','LIGHT','CROUCH','LISTEN','REPEAT','EAT','CAMERA','JAMMER','MASK'];
   document.querySelectorAll('.touch-actions button').forEach((button,index)=>button.textContent=touchLabels[index]);
-  gesturePad.setAttribute('aria-label',es?'Panel de gestos. Junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave; desliza cuatro dedos a la izquierda para abrirla. Desliza y mantén hacia arriba para caminar y hacia abajo para retroceder. Toca tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.':'Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open it. Swipe and hold up to walk and down to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.');
+  gesturePad.setAttribute('aria-label',es?'Panel de gestos. Junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave; desliza cuatro dedos a la izquierda para abrirla o cerrarla. Desliza y mantén hacia arriba para caminar y hacia abajo para retroceder. Toca tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.':'Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open or close it. Swipe and hold up to walk and down to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.');
   visualMessage.textContent=translateText(visualMessage.dataset.message||visualMessage.textContent);
   updateGestureItemStatus();
   if(running){updateHud();draw();}
@@ -1339,7 +1343,7 @@ canvas.addEventListener('pointermove',event=>{
   const multiDx=event.clientX-origin.x,multiDy=event.clientY-origin.y;
   if(visualFourFingerActive&&!visualGestureStart.used&&Math.abs(multiDx)>48&&Math.abs(multiDx)>Math.abs(multiDy)){
     visualGestureStart.used=true;stopVisualGesture();
-    useNearbySecurityDoor(multiDx>0?'gesture-insert':'gesture-open');return;
+    useNearbySecurityDoor(multiDx>0?'gesture-insert':'gesture-toggle');return;
   }
   if(visualGesturePointers.size>=4)return;
   if(visualGesturePointers.size>=3&&multiDy<-42&&!visualGestureStart.used){visualGestureStart.used=true;stopVisualGesture();useMap();return;}
@@ -1390,11 +1394,19 @@ function manhattan(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
 function closedDoorAt(x,y){return phase==='escape'?securityDoors.find(door=>!door.open&&door.x===x&&door.y===y):null;}
 function tileBlocked(x,y){return walls.has(`${x},${y}`)||Boolean(closedDoorAt(x,y));}
 function useSecurityDoor(door,action){
-  if(!door||door.open)return true;
-  if(action==='push'||action==='open'||action==='gesture-open'){
+  if(!door)return false;
+  if(door.open&&(action==='close'||action==='gesture-toggle')){
+    if(boss.x===door.x&&boss.y===door.y){lockedDoorSound();announce('Mr. Hollow is in the doorway. You cannot close it yet.',true);draw();return false;}
+    door.open=false;
+    closeDoorSound();
+    announce('The security door closes. Mr. Hollow cannot cross it.',true);
+    updateHud();draw();return true;
+  }
+  if(door.open)return true;
+  if(action==='push'||action==='open'||action==='gesture-open'||action==='gesture-toggle'){
     if(!door.keyInserted){
       lockedDoorSound();
-      announce(brassKeys>0?(action==='open'?'Press I to insert a brass key into this door.':action==='gesture-open'?'Swipe four fingers right to insert a brass key first.':'Insert a brass key with Interact before pushing the door.'):'The security door is locked. Search the shelves for a brass key.',true);
+      announce(brassKeys>0?(action==='open'?'Press I to insert a brass key into this door.':action==='gesture-open'||action==='gesture-toggle'?'Swipe four fingers right to insert a brass key first.':'Insert a brass key with Interact before pushing the door.'):'The security door is locked. Search the shelves for a brass key.',true);
       draw();return false;
     }
     door.open=true;
@@ -1412,8 +1424,8 @@ function useSecurityDoor(door,action){
 }
 function useNearbySecurityDoor(action){
   if(!running||paused||phase!=='escape')return;
-  const door=securityDoors.find(item=>!item.open&&manhattan(player,item)<=1);
-  if(!door){announce(action==='insert'?'No locked door is close enough to insert a key.':'No prepared door is close enough to open.',true);return;}
+  const door=securityDoors.find(item=>(action==='close'?item.open:action==='gesture-toggle'?true:!item.open)&&manhattan(player,item)<=1);
+  if(!door){announce(action==='insert'?'No locked door is close enough to insert a key.':action==='close'?'No open door is close enough to close.':action==='gesture-toggle'?'No security door is close enough to open or close.':'No prepared door is close enough to open.',true);return;}
   useSecurityDoor(door,action);
 }
 function currentGoal(){return !hasFuse||!powerOn?fuse:!hasKey?keycard:exit;}
@@ -1461,6 +1473,10 @@ function lockedDoorSound(){
 function openDoorSound(){
   noiseBurst(.42,.07,.2);setTimeout(()=>tone(92,.3,.1),45);setTimeout(()=>tone(150,.14,-.1),170);
   if(navigator.vibrate)navigator.vibrate(55);
+}
+function closeDoorSound(){
+  noiseBurst(.34,.075,-.15);tone(155,.12,.1);setTimeout(()=>tone(78,.22,0),90);setTimeout(()=>noiseBurst(.09,.12,0),185);
+  if(navigator.vibrate)navigator.vibrate([45,25,75]);
 }
 function insertKeySound(){
   keyRattle(0);setTimeout(()=>tone(390,.07,-.2),125);setTimeout(()=>tone(210,.11,.2),205);
@@ -1645,8 +1661,8 @@ gesturePad.addEventListener('pointermove',event=>{
     const {dx,dy}=orientedGestureDelta(event.clientX-multiGestureStart.x,event.clientY-multiGestureStart.y);
     if(fourFingerTouch){
       if(!multiGestureAction&&Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)){
-        multiGestureAction=dx>0?'door-insert':'door-open';
-        useNearbySecurityDoor(dx>0?'gesture-insert':'gesture-open');
+        multiGestureAction=dx>0?'door-insert':'door-toggle';
+        useNearbySecurityDoor(dx>0?'gesture-insert':'gesture-toggle');
       }
       return;
     }
@@ -2232,8 +2248,9 @@ window.addEventListener('keydown',event=>{
   else if(code==='KeyE'){event.preventDefault();interact(false);}
   else if(code==='KeyI'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('insert');}
   else if(code==='KeyO'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('open');}
+  else if(code==='KeyC'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('close');}
   else if(code==='Space'||code==='KeyJ'){event.preventDefault();if(!event.repeat)jumpForward();}
-  else if(code==='KeyC'){event.preventDefault();audioCompass();}
+  else if(code==='KeyL'){event.preventDefault();audioCompass();}
   else if(code==='KeyQ'){event.preventDefault();announce(objective(),true);}
   else if(code==='KeyF'){event.preventDefault();toggleFlashlight();}
   else if(code==='KeyB'){event.preventDefault();useStunBottle();}
@@ -2385,7 +2402,7 @@ document.querySelector('#accessModal').addEventListener('keydown',event=>{
   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
 });
-document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. I inserts a door key. O opens the prepared door. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
+document.querySelector('#helpButton').addEventListener('click',()=>announce('Arrows move and turn. Space or J jumps. H crouches. E interacts. I inserts a door key. O opens the prepared door. C closes an open security door. L activates the audio compass. R eats food. B throws a stun bottle. M uses the required map. N deploys a noise lure. X fires the flash camera. V places a door jammer. Z uses the scent mask. F toggles the flashlight. P pauses.',true));
 window.addEventListener('beforeinstallprompt',event=>{
   event.preventDefault();
   deferredInstallPrompt=event;
