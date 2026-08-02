@@ -120,10 +120,10 @@ const doorBlueprints = [
   {x:16,y:16,orientation:'horizontal'}
 ];
 const shelfKeyCandidates = [
-  {x:4,y:5},{x:7,y:4},{x:12,y:3},{x:13,y:5},{x:12,y:7},{x:13,y:7},
-  {x:17,y:5},{x:21,y:4},{x:25,y:3},{x:26,y:5},{x:25,y:7},{x:26,y:7},
-  {x:4,y:10},{x:8,y:9},{x:12,y:11},{x:13,y:13},{x:17,y:10},{x:21,y:9},
-  {x:25,y:10},{x:26,y:12},{x:4,y:15},{x:8,y:14},{x:17,y:15},{x:21,y:14}
+  {x:4,y:4},{x:7,y:5},{x:5,y:9},{x:8,y:10},{x:4,y:14},{x:8,y:15},
+  {x:13,y:4},{x:17,y:5},{x:20,y:4},{x:13,y:9},{x:17,y:10},{x:20,y:9},
+  {x:13,y:14},{x:17,y:15},{x:20,y:14},{x:24,y:4},{x:27,y:5},{x:25,y:9},
+  {x:28,y:10},{x:24,y:14},{x:27,y:15},{x:24,y:11},{x:28,y:6},{x:10,y:17}
 ];
 
 const walls = new Set();
@@ -131,16 +131,16 @@ const shelfTiles = new Set();
 for (let x = 0; x < COLS; x++) { walls.add(`${x},0`); walls.add(`${x},${ROWS - 1}`); }
 for (let y = 0; y < ROWS; y++) { walls.add(`0,${y}`); walls.add(`${COLS - 1},${y}`); }
 [
-  [4,4,5,2],[4,9,5,2],[4,14,5,2],
-  [12,3,2,5],[12,10,2,5],
-  [17,4,5,2],[17,9,5,2],[17,14,5,2],
-  [25,3,2,5],[25,10,2,5],
-  [2,13,2,1],[9,17,7,1],[23,17,4,1],[29,6,2,1]
+  [4,4,6,2],[4,9,6,2],[4,14,6,2],
+  [13,4,8,2],[13,9,8,2],[13,14,8,2],
+  [24,4,5,2],[24,9,5,2],[24,14,5,2],
+  [9,17,2,1],[24,11,3,1],[28,6,2,1]
 ].forEach(([x,y,w,h]) => {
   for (let ix=x; ix<x+w; ix++) for (let iy=y; iy<y+h; iy++){
     shelfTiles.add(`${ix},${iy}`);
   }
 });
+shelfKeyCandidates.forEach(spot=>shelfTiles.add(`${spot.x},${spot.y}`));
 
 let player;
 let boss;
@@ -1501,12 +1501,21 @@ function flashlightSound(){noiseBurst(.025,.06,0);tone(flashlight?1250:480,.035,
 function flashlightHitsBoss(maxRange=8){
   if(!flashlight||hidden||phase!=='escape')return false;
   const beam=facingVectors[facing];
-  for(let step=1;step<=maxRange;step++){
-    const x=player.x+beam.x*step,y=player.y+beam.y*step;
-    if(tileBlocked(x,y))return false;
-    if(boss.x===x&&boss.y===y)return true;
+  const dx=boss.x-player.x,dy=boss.y-player.y;
+  const beamLength=Math.hypot(beam.x,beam.y);
+  const forward=(dx*beam.x+dy*beam.y)/beamLength;
+  const sideways=Math.abs(dx*beam.y-dy*beam.x)/beamLength;
+  if(forward<=0||forward>maxRange||sideways>Math.max(1.5,forward*.45))return false;
+  let x=player.x,y=player.y;
+  const stepX=Math.sign(dx),stepY=Math.sign(dy),absX=Math.abs(dx),absY=Math.abs(dy);
+  let error=absX-absY;
+  while(x!==boss.x||y!==boss.y){
+    const doubled=error*2;
+    if(doubled>-absY){error-=absY;x+=stepX;}
+    if(doubled<absX){error+=absX;y+=stepY;}
+    if((x!==boss.x||y!==boss.y)&&tileBlocked(x,y))return false;
   }
-  return false;
+  return true;
 }
 function checkFlashlightDistraction(){
   if(flashlightDistractedBoss||!flashlightHitsBoss())return false;
