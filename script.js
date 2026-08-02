@@ -115,8 +115,8 @@ const doorBlueprints = [
   {x:16,y:16,orientation:'horizontal'}
 ];
 const shelfKeyCandidates = [
-  {x:4,y:6},{x:9,y:5},{x:11,y:6},{x:14,y:6},{x:17,y:6},
-  {x:22,y:5},{x:27,y:6},{x:11,y:10},{x:22,y:10},{x:8,y:16}
+  {x:4,y:4},{x:7,y:5},{x:12,y:4},{x:13,y:6},{x:17,y:4},
+  {x:21,y:5},{x:25,y:4},{x:26,y:6},{x:12,y:10},{x:21,y:10}
 ];
 
 const walls = new Set();
@@ -131,7 +131,7 @@ for (let y = 0; y < ROWS; y++) { walls.add(`0,${y}`); walls.add(`${COLS - 1},${y
   [2,13,2,1],[9,17,7,1],[23,17,4,1],[29,6,2,1]
 ].forEach(([x,y,w,h]) => {
   for (let ix=x; ix<x+w; ix++) for (let iy=y; iy<y+h; iy++){
-    const key=`${ix},${iy}`;walls.add(key);shelfTiles.add(key);
+    shelfTiles.add(`${ix},${iy}`);
   }
 });
 
@@ -1238,7 +1238,7 @@ function draw() {
 }
 
 function drawStoreFixtures(){
-  // Every interior collision block is a visibly stocked shelf.
+  // Shelves are searchable scenery: visibly stocked, but never movement blockers.
   ctx.save();
   shelfTiles.forEach(key=>{
     const [x,y]=key.split(',').map(Number);
