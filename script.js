@@ -106,6 +106,11 @@ const clueTexts = [
 ];
 const hideSpots = [{x:6,y:2},{x:25,y:17},{x:15,y:9},{x:5,y:11},{x:26,y:8}];
 const patrolPoints = [{x:28,y:3},{x:28,y:15},{x:21,y:17},{x:12,y:17},{x:3,y:12},{x:5,y:3},{x:16,y:9}];
+const hollowHidingPoints = [
+  {x:29,y:2},{x:27,y:6},{x:29,y:14},{x:24,y:17},{x:18,y:17},{x:11,y:17},
+  {x:3,y:15},{x:3,y:9},{x:5,y:6},{x:10,y:2},{x:16,y:2},{x:22,y:2},
+  {x:15,y:7},{x:23,y:12},{x:9,y:13}
+];
 const doorBlueprints = [
   {x:11,y:8,orientation:'vertical'},
   {x:14,y:8,orientation:'vertical'},
@@ -204,6 +209,7 @@ let huntMemory;
 let bossSearching;
 let lastAmbush;
 let nextAmbushAt;
+let nextPresenceCueAt;
 let dangerMusicActive;
 let dangerNearSince;
 let dangerFarSince;
@@ -303,6 +309,7 @@ const spanishExact = {
   'Office keycard collected. Mr. Hollow enters his enraged phase. Reach the loading exit southeast.':'Tarjeta recogida. El señor Hollow entra en su fase furiosa. Llega a la salida de carga al sureste.',
   'Nothing to use here.':'No hay nada que usar aquí.',
   'The store falls silent. Mr. Hollow’s location is unknown.':'La tienda queda en silencio. No se conoce la ubicación del señor Hollow.',
+  'Mr. Hollow is somewhere in the store. Listen for him.':'El señor Hollow está en algún lugar de la tienda. Escúchalo.',
   'Caught by Mr. Hollow. Shift ended.':'El señor Hollow te atrapó. El turno terminó.',
   'You escaped Aisle 13. Shift survived.':'Escapaste del Pasillo 13. Sobreviviste al turno.',
   'No food remains in your pack.':'No queda comida en tu mochila.',
@@ -385,6 +392,7 @@ function translateText(message){
     .replace(/^Facing south\.$/,'Mirando al sur.')
     .replace(/^Facing east\.$/,'Mirando al este.')
     .replace(/^Facing west\.$/,'Mirando al oeste.')
+    .replace(/^Danger\. Mr\. Hollow is (.+), (\d+) steps\.$/,'Peligro. El señor Hollow está $1, a $2 pasos.')
     .replace(/\bnortheast\b/gi,'noreste').replace(/\bnorthwest\b/gi,'noroeste').replace(/\bsoutheast\b/gi,'sureste').replace(/\bsouthwest\b/gi,'suroeste')
     .replace(/\bnorth\b/gi,'norte').replace(/\bsouth\b/gi,'sur').replace(/\beast\b/gi,'este').replace(/\bwest\b/gi,'oeste')
     .replace(/\bsteps?\b/gi,'pasos').replace(/\bremaining\b/gi,'restantes').replace(/\bleft\b/gi,'restantes')
@@ -567,7 +575,8 @@ function resetGame() {
   huntMemory = 0;
   bossSearching = false;
   lastAmbush = 0;
-  nextAmbushAt = performance.now()+8000+Math.random()*9000;
+  nextAmbushAt = performance.now()+12000+Math.random()*12000;
+  nextPresenceCueAt = performance.now()+4500+Math.random()*5000;
   dangerMusicActive = false;
   dangerNearSince = 0;
   dangerFarSince = 0;
@@ -987,11 +996,12 @@ function audioCompass() {
   const uncleaned=cleaningSpots.find((spot,index)=>!cleanedSpots.has(index));
   const goal = phase==='customers' ? checkoutSpot : phase==='cleaning' ? (hasMop?uncleaned:mopSpot) : !hasFuse || !powerOn ? fuse : !hasKey ? keycard : exit;
   const goalName = phase==='customers' ? 'Checkout' : phase==='cleaning' ? (hasMop?'Next spill':'Mop closet') : !hasFuse ? 'Fuse' : !powerOn ? 'Breaker' : !hasKey ? 'Keycard' : 'Exit';
+  const enemyDistance=manhattan(player,boss);
   const enemyDirection = directionWords(boss.x-player.x,boss.y-player.y);
-  const dangerLine=phase!=='escape'?'Mr. Hollow is watching from the service desk.':`Mr. Hollow: ${enemyDirection}, ${manhattan(player,boss)} steps.`;
+  const dangerLine=phase!=='escape'?'Mr. Hollow is watching from the service desk.':enemyDistance<=5?`Danger. Mr. Hollow is ${enemyDirection}, ${enemyDistance} steps.`:'Mr. Hollow is somewhere in the store. Listen for him.';
   announce(`${goalName}: ${directionWords(goal.x-player.x,goal.y-player.y)}, ${manhattan(player,goal)} steps. ${dangerLine}`, true);
   spatialCue(goal.x-player.x, 520);
-  if(phase==='escape')setTimeout(()=>spatialCue(boss.x-player.x,110),280);
+  if(phase==='escape'&&enemyDistance<=5)setTimeout(()=>spatialCue(boss.x-player.x,110),280);
 }
 
 function bossStep(time) {
@@ -1003,16 +1013,16 @@ function bossStep(time) {
   const scentMasked = time < scentMaskUntil;
   const seesPlayer = !hidden&&manhattan(player,boss) <= Math.max(scentMasked?1:2,baseSight-(crouching?3:0)-(scentMasked?4:0));
   const distanceBeforeMove=manhattan(player,boss);
-  if(distanceBeforeMove>7&&Math.random()<.08)return;
+  if(distanceBeforeMove>7&&Math.random()<.16)return;
   if(time>=nextAmbushAt&&distanceBeforeMove>8){
-    const ambushPoints=patrolPoints.filter(point=>{const distance=manhattan(player,point);return distance>=6&&distance<=13&&!tileBlocked(point.x,point.y);});
+    const ambushPoints=hollowHidingPoints.filter(point=>{const distance=manhattan(player,point);return distance>=9&&distance<=18&&!tileBlocked(point.x,point.y);});
     if(ambushPoints.length){
       boss={...ambushPoints[Math.floor(Math.random()*ambushPoints.length)]};
       lastAmbush=time;
       patrolIndex=Math.floor(Math.random()*patrolPoints.length);
       if(blindMode)announce('The store falls silent. Mr. Hollow’s location is unknown.',true);
     }
-    nextAmbushAt=time+9000+Math.random()*11000;
+    nextAmbushAt=time+14000+Math.random()*12000;
   }
   let target;
   if(lureTurns>0&&lureTarget){
@@ -1055,7 +1065,7 @@ function bossStep(time) {
     spatialCue(boss.x-player.x, distance <= 2 ? 75 : 105);
     if(distance<=4)heartbeatSound(distance);
     if (Math.random() < .18) keyRattle(boss.x-player.x);
-    if(distance<=5&&time>=nextJumpScareAt&&Math.random()<.58)triggerJumpScare(distance<=2?'HE FOUND YOU.':Math.random()<.5?'DON’T MOVE.':'SOMETHING MOVED.',false);
+    if(distance<=5&&time>=nextJumpScareAt&&Math.random()<.38)triggerJumpScare(distance<=2?'HE FOUND YOU.':Math.random()<.5?'DON’T MOVE.':'SOMETHING MOVED.',false);
     if (blindMode && distance === 3) announce(`Danger. Mr. Hollow is ${directionWords(boss.x-player.x,boss.y-player.y)}, three steps away.`,true);
   }
   updateHud();
@@ -2213,8 +2223,8 @@ function triggerJumpScare(text='RUN.',force=false){
 }
 
 function fearEvent(time){
-  if(!running||paused||phase!=='escape'||time-lastFearEvent<8000)return;
-  lastFearEvent=time+Math.random()*5000;flickerUntil=time+350+Math.random()*500;
+  if(!running||paused||phase!=='escape'||time<nextPresenceCueAt)return;
+  lastFearEvent=time;nextPresenceCueAt=time+6000+Math.random()*6000;flickerUntil=time+350+Math.random()*500;
   const eventRoll=Math.random();
   if(eventRoll<.34){
     const fakePan=boss.x>player.x?-1:1;
@@ -2232,7 +2242,7 @@ function fearEvent(time){
     noiseBurst(.32,.055,0);
     setTimeout(()=>playStoreSpeakerRecording(messageIndex,message),180);
   }
-  if(time>=nextJumpScareAt&&Math.random()<(flashlight ? .34 : .62))triggerJumpScare(Math.random()<.5?'SOMETHING MOVED.':'DON’T MOVE.',false);
+  if(time>=nextJumpScareAt&&Math.random()<(flashlight ? .2 : .34))triggerJumpScare(Math.random()<.5?'SOMETHING MOVED.':'DON’T MOVE.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
 function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
