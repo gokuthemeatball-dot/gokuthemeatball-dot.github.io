@@ -241,6 +241,7 @@ let deferredInstallPrompt = null;
 let language = localStorage.getItem('aisle13Language') === 'es' ? 'es' : 'en';
 let accessMenuTrigger = null;
 const accessBackgroundState = new Map();
+const startBackgroundState = new Map();
 let selectedGestureItem = 0;
 let gestureStart = null;
 let gestureLast = null;
@@ -431,10 +432,13 @@ function applyLanguage(){
   const es=language==='es';
   document.querySelector('#accessTitle').textContent=es?'Visual, audio o ambos':'Visual, audio, or both';
   document.querySelector('#accessDescription').textContent=es?'Jugadores con visión, ciegos y con baja visión comparten la misma historia, mapa, objetivos y dificultad. Elige la información que te funcione mejor.':'Sighted, blind, and low-vision players share the same story, map, objectives, and difficulty. Choose the information that works best for you.';
-  document.querySelector('#accessTalkBackHint').textContent=es?'TalkBack: desliza a la derecha o izquierda por cada opción y toca dos veces para cambiarla. Elige Listo cuando termines.':'TalkBack: swipe right or left through every option, then double tap to change it. Choose Done when ready.';
+  document.querySelector('#accessTalkBackHint').textContent=es?'TalkBack o Jieshuo: desliza a la derecha o izquierda por cada opción y toca dos veces para cambiarla. Elige Listo cuando termines.':'TalkBack or Jieshuo: swipe right or left through every option, then double tap to change it. Choose Done when ready.';
+  document.querySelector('#startScreenReaderHelp').textContent=es?'Usuarios de TalkBack y Jieshuo: deslicen a la derecha o izquierda para moverse entre Accesibilidad e Iniciar juego y toquen dos veces para activar. Abran Accesibilidad primero para elegir mensajes hablados, sonido, contraste, modo de gestos e idioma.':'TalkBack and Jieshuo users: swipe right or left to move between Accessibility and Start Game, then double tap to activate. Open Accessibility first to choose spoken updates, sound, contrast, blind gesture mode, and language.';
   document.querySelector('#accessCloseIcon').textContent=es?'CERRAR':'CLOSE';
   document.querySelector('#accessCloseIcon').setAttribute('aria-label',es?'Cerrar menú de accesibilidad':'Close accessibility menu');
-  document.querySelector('#startButton').innerHTML=es?'INICIAR JUEGO <span>→</span>':'START GAME <span>→</span>';
+  document.querySelector('#startButton').innerHTML=es?'INICIAR JUEGO <span aria-hidden="true">→</span>':'START GAME <span aria-hidden="true">→</span>';
+  document.querySelector('#startButton').setAttribute('aria-label',es?'Iniciar Night Shift: Pasillo 13':'Start Night Shift: Aisle 13');
+  document.querySelector('#startAccessButton').setAttribute('aria-label',es?'Abrir opciones de accesibilidad y lector de pantalla':'Open accessibility and screen reader options');
   document.querySelector('#startAccessButton').textContent=es?'ACCESIBILIDAD':'ACCESSIBILITY';
   document.querySelector('#accessButton').textContent=es?'Accesibilidad':'Accessibility';
   document.querySelector('#helpButton').textContent=es?'Controles':'Controls';
@@ -2376,6 +2380,7 @@ function startGame(){
   document.body.classList.toggle('screen-reader-controls',blindMode);
   gestureControls.hidden=!blindMode;
   if(blindMode)enterGestureFullscreen();
+  setStartBackgroundInert(false);
   document.querySelector('#startModal').hidden=true;
   ensureAudio();primeDangerMusic();primeDeathMusic();primeLightsOutMusic();primeStoreTrack();primeExplorationTrack();primeMemoryLossSound();primeCloseBySound();primeJumpSound();primeSurpriseSound();primeQuestionSound();primeStoreSpeakerRecordings();resetGame();
   (blindMode?gesturePad:canvas).focus();
@@ -2404,6 +2409,22 @@ document.querySelector('#startModal').addEventListener('pointerup',event=>{
   }else startGestureTapTimer=setTimeout(()=>{startGestureTapCount=0;startGestureTapTimer=null;},430);
 });
 document.querySelector('#restartButton').addEventListener('click',()=>{resetGame();startIntro();});
+function setStartBackgroundInert(inert){
+  [...document.body.children].forEach(element=>{
+    if(element.id==='startModal'||element.id==='accessModal'||element.id==='liveRegion'||element.tagName==='SCRIPT')return;
+    if(inert){
+      startBackgroundState.set(element,{inert:element.inert,ariaHidden:element.getAttribute('aria-hidden')});
+      element.inert=true;
+      element.setAttribute('aria-hidden','true');
+    }else{
+      const previous=startBackgroundState.get(element);
+      element.inert=previous?.inert||false;
+      if(previous?.ariaHidden===null||previous?.ariaHidden===undefined)element.removeAttribute('aria-hidden');
+      else element.setAttribute('aria-hidden',previous.ariaHidden);
+      startBackgroundState.delete(element);
+    }
+  });
+}
 function setAccessBackgroundInert(inert){
   [...document.body.children].forEach(element=>{
     if(element.id==='accessModal'||element.id==='liveRegion'||element.tagName==='SCRIPT')return;
@@ -2475,4 +2496,6 @@ if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serv
 resetGame();
 running = false;
 applyLanguage();
+setStartBackgroundInert(true);
+requestAnimationFrame(()=>document.querySelector('#startTitle').focus());
 requestAnimationFrame(gameLoop);

@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=32" />
-  <link rel="stylesheet" href="horror-mobile.css?v=110" />
+  <link rel="stylesheet" href="horror-mobile.css?v=111" />
   <style>.inventory div{flex-wrap:wrap}.inventory{max-width:65%}</style>
 </head>
 <body>
@@ -135,15 +135,16 @@
     </div>
   </div>
 
-  <div class="modal" id="startModal" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+  <div class="modal" id="startModal" role="dialog" aria-modal="true" aria-labelledby="startTitle" aria-describedby="startDescription audienceNote startScreenReaderHelp headphonesNote">
     <div class="modal-card">
       <img class="start-art" src="aisle13-keyart.jpg" alt="A dark abandoned supermarket aisle with Mr. Hollow standing beneath failing fluorescent lights." />
       <p class="kicker">NIGHT SHIFT</p>
-      <h2 id="startTitle">AISLE 13</h2>
+      <h2 id="startTitle" tabindex="-1">AISLE 13</h2>
       <p id="startDescription">A routine overnight sanitation shift. No customers, no coworkers, and one manager who never seems to leave.</p>
       <p id="audienceNote" class="audience-note">Built for every player. Play visually, through sound, or with both—every objective, threat, and interaction remains available.</p>
-      <button id="startAccessButton" type="button" aria-haspopup="dialog" aria-controls="accessModal" aria-expanded="false">ACCESSIBILITY</button>
-      <button id="startButton" type="button">START GAME <span>→</span></button>
+      <p id="startScreenReaderHelp" class="sr-only">TalkBack and Jieshuo users: swipe right or left to move between Accessibility and Start Game, then double tap to activate. Open Accessibility first to choose spoken updates, sound, contrast, blind gesture mode, and language.</p>
+      <button id="startAccessButton" type="button" aria-label="Open accessibility and screen reader options" aria-haspopup="dialog" aria-controls="accessModal" aria-expanded="false">ACCESSIBILITY</button>
+      <button id="startButton" type="button" aria-label="Start Night Shift: Aisle 13">START GAME <span aria-hidden="true">→</span></button>
       <small id="headphonesNote">Headphones recommended for spatial audio. Narration is optional.</small>
     </div>
   </div>
@@ -156,7 +157,7 @@
       </div>
       <h2 id="accessTitle" tabindex="-1">Visual, audio, or both</h2>
       <p id="accessDescription">Sighted, blind, and low-vision players share the same story, map, objectives, and difficulty. Choose the information that works best for you.</p>
-      <p id="accessTalkBackHint" class="talkback-hint">TalkBack: swipe right or left through every option, then double tap to change it. Choose Done when ready.</p>
+      <p id="accessTalkBackHint" class="talkback-hint">TalkBack or Jieshuo: swipe right or left through every option, then double tap to change it. Choose Done when ready.</p>
       <label><input id="narrationToggle" type="checkbox" /> <span id="narrationLabel">Spoken game updates</span></label>
       <label><input id="soundToggle" type="checkbox" checked /> <span id="soundLabel">Spatial sounds and music</span></label>
       <label><input id="contrastToggle" type="checkbox" /> <span id="contrastLabel">Extra-high contrast</span></label>
@@ -183,6 +184,6 @@
   </div>
 
   <p id="liveRegion" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
-  <script src="script.js?v=110"></script>
+  <script src="script.js?v=111"></script>
 </body>
 </html>
