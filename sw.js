@@ -1,4 +1,4 @@
-const CACHE_NAME='aisle13-app-v99';
+const CACHE_NAME='aisle13-app-v100';
 const APP_SHELL=[
   './',
   './index.html',
@@ -7,8 +7,8 @@ const APP_SHELL=[
   './app-icon-192.png',
   './app-icon-512.png',
   './style.css?v=32',
-  './horror-mobile.css?v=99',
-  './script.js?v=99',
+  './horror-mobile.css?v=100',
+  './script.js?v=100',
   './mr-hollow.jpg',
   './mr-hollow.png',
   './aisle13-keyart.jpg',

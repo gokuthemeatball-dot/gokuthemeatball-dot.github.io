@@ -108,7 +108,10 @@ const hideSpots = [{x:6,y:2},{x:25,y:17},{x:15,y:9},{x:5,y:11},{x:26,y:8}];
 const patrolPoints = [{x:28,y:3},{x:28,y:15},{x:21,y:17},{x:12,y:17},{x:3,y:12},{x:5,y:3},{x:16,y:9}];
 const doorBlueprints = [
   {x:11,y:8,orientation:'vertical'},
+  {x:14,y:8,orientation:'vertical'},
   {x:24,y:8,orientation:'vertical'},
+  {x:27,y:8,orientation:'vertical'},
+  {x:9,y:16,orientation:'horizontal'},
   {x:16,y:16,orientation:'horizontal'}
 ];
 const shelfKeyCandidates = [
@@ -117,6 +120,7 @@ const shelfKeyCandidates = [
 ];
 
 const walls = new Set();
+const shelfTiles = new Set();
 for (let x = 0; x < COLS; x++) { walls.add(`${x},0`); walls.add(`${x},${ROWS - 1}`); }
 for (let y = 0; y < ROWS; y++) { walls.add(`0,${y}`); walls.add(`${COLS - 1},${y}`); }
 [
@@ -126,7 +130,9 @@ for (let y = 0; y < ROWS; y++) { walls.add(`0,${y}`); walls.add(`${COLS - 1},${y
   [25,3,2,5],[25,10,2,5],
   [2,13,2,1],[9,17,7,1],[23,17,4,1],[29,6,2,1]
 ].forEach(([x,y,w,h]) => {
-  for (let ix=x; ix<x+w; ix++) for (let iy=y; iy<y+h; iy++) walls.add(`${ix},${iy}`);
+  for (let ix=x; ix<x+w; ix++) for (let iy=y; iy<y+h; iy++){
+    const key=`${ix},${iy}`;walls.add(key);shelfTiles.add(key);
+  }
 });
 
 let player;
@@ -279,6 +285,8 @@ const spanishExact = {
   'Mr. Hollow orders you to clean the two marked spills.':'El señor Hollow te ordena limpiar los dos derrames marcados.',
   'You are out of energy. Find food and press E to eat.':'No tienes energía. Encuentra comida y usa Interactuar para comer.',
   'Blocked. A shelf or wall is in that direction.':'Bloqueado. Hay un estante o una pared en esa dirección.',
+  'Blocked by a stocked shelf. Go around it.':'Un estante lleno bloquea el paso. Rodéalo.',
+  'Blocked by the store wall. Turn and choose another route.':'La pared de la tienda bloquea el paso. Gira y elige otra ruta.',
   'Your memory becomes whole again. One chance is restored. Your breathing steadies, your energy rises, and Mr. Hollow loses your trail for four seconds.':'Tu memoria vuelve a estar completa. Recuperas una oportunidad. Recuperas energía y el señor Hollow pierde tu rastro durante cuatro segundos.',
   'Hidden inside a supply cabinet. Mr. Hollow cannot see you. Press E to leave.':'Estás escondido en un armario. El señor Hollow no puede verte. Usa Interactuar para salir.',
   'You leave the hiding place. Listen before moving.':'Sales del escondite. Escucha antes de moverte.',
@@ -723,7 +731,7 @@ function movePlayer(dx, dy, quiet = false, energyCost = 1, allowDoorPush = true)
   if(closedDoor&&!allowDoorPush){lockedDoorSound();announce(closedDoor.keyInserted?'The key is inserted. Press O to open this door.':'Press I to insert a brass key into this door.',true);return;}
   if(closedDoor&&!useSecurityDoor(closedDoor,'push'))return;
   if (walls.has(`${next.x},${next.y}`)) {
-    announce('Blocked. A shelf or wall is in that direction.', blindMode);
+    announce(shelfTiles.has(`${next.x},${next.y}`)?'Blocked by a stocked shelf. Go around it.':'Blocked by the store wall. Turn and choose another route.', blindMode);
     tone(120, .06, 0);
     return;
   }
@@ -1177,10 +1185,8 @@ function draw() {
     if(wall){ctx.strokeStyle='#3c4947';ctx.strokeRect(x*TILE+2,y*TILE+2,TILE-4,TILE-4);}
   }
   drawStoreFixtures();
-  if(phase==='escape'){
-    securityDoors.forEach(drawSecurityDoor);
-    shelfKeys.forEach(key=>{if(!key.collected)drawShelfKey(key);});
-  }
+  securityDoors.forEach(door=>drawSecurityDoor(phase==='escape'?door:{...door,open:true}));
+  if(phase==='escape')shelfKeys.forEach(key=>{if(!key.collected)drawShelfKey(key);});
   if(phase==='escape')hideSpots.forEach(h=>drawMarker(h,'#50645f','H'));
   if(phase==='customers')drawCheckoutCounter();
   if(phase==='cleaning'){
@@ -1232,15 +1238,24 @@ function draw() {
 }
 
 function drawStoreFixtures(){
-  // Each wall run is a stocked shelf rather than an abstract obstacle.
+  // Every interior collision block is a visibly stocked shelf.
   ctx.save();
-  walls.forEach(key=>{
+  shelfTiles.forEach(key=>{
     const [x,y]=key.split(',').map(Number);
-    if(x===0||y===0||x===COLS-1||y===ROWS-1)return;
     const px=x*TILE,py=y*TILE;
-    ctx.fillStyle='#5b4430';ctx.fillRect(px+3,py+4,TILE-6,TILE-8);
-    ctx.fillStyle='#2b1f18';ctx.fillRect(px+6,py+7,TILE-12,4);ctx.fillRect(px+6,py+19,TILE-12,4);ctx.fillRect(px+6,py+31,TILE-12,3);
-    ['#d4a54b','#7aab78','#c96e58'].forEach((color,index)=>{ctx.fillStyle=color;ctx.fillRect(px+8+index*8,py+9,5,7);ctx.fillRect(px+8+index*8,py+21,5,7);});
+    const stockSeed=(x*17+y*31)%5;
+    ctx.fillStyle='#65492e';ctx.fillRect(px+2,py+2,TILE-4,TILE-4);
+    ctx.fillStyle='#1d1713';ctx.fillRect(px+5,py+6,TILE-10,5);ctx.fillRect(px+5,py+19,TILE-10,5);ctx.fillRect(px+5,py+32,TILE-10,4);
+    for(let row=0;row<2;row++)for(let slot=0;slot<4;slot++){
+      const product=(stockSeed+row*2+slot)%5;
+      const itemX=px+7+slot*7,itemY=py+11+row*13;
+      if(product===0){ctx.fillStyle='#e2c45a';ctx.fillRect(itemX,itemY,5,8);ctx.fillStyle='#7d3d31';ctx.fillRect(itemX,itemY,5,2);}
+      else if(product===1){ctx.fillStyle='#75a979';ctx.fillRect(itemX,itemY+1,6,7);ctx.fillStyle='#dce8d7';ctx.fillRect(itemX+1,itemY+2,4,2);}
+      else if(product===2){ctx.fillStyle='#c96e58';ctx.fillRect(itemX,itemY,5,8);ctx.fillStyle='#f0c99e';ctx.fillRect(itemX+1,itemY+1,3,2);}
+      else if(product===3){ctx.fillStyle='#79aeca';ctx.beginPath();ctx.arc(itemX+3,itemY+4,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d8eff5';ctx.fillRect(itemX+2,itemY,2,2);}
+      else{ctx.fillStyle='#d5d2c6';ctx.fillRect(itemX,itemY+2,6,6);ctx.fillStyle='#9d7cc4';ctx.fillRect(itemX,itemY+2,6,2);}
+    }
+    ctx.strokeStyle='#9a7449';ctx.lineWidth=1;ctx.strokeRect(px+2,py+2,TILE-4,TILE-4);
   });
   ctx.restore();
 }
