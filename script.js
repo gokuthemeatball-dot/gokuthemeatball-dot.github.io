@@ -2259,7 +2259,13 @@ window.addEventListener('keydown',event=>{
   if(moppingIndex>=0&&(code==='ArrowLeft'||code==='ArrowRight')){event.preventDefault();if(!event.repeat)mopStroke(code==='ArrowLeft'?'left':'right');return;}
   if(code==='ArrowUp'){event.preventDefault();moveFacing(false,event.shiftKey,false);}
   else if(code==='ArrowDown'){event.preventDefault();moveFacing(true,false,false);}
-  else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();const diagonalTurn=computerShiftHeld&&event.shiftKey;turnPlayer((code==='ArrowLeft'?-1:1)*(diagonalTurn?1:2));}
+  else if(code==='ArrowLeft'||code==='ArrowRight'){
+    event.preventDefault();
+    const direction=code==='ArrowLeft'?-1:1;
+    const diagonalTurn=computerShiftHeld&&event.shiftKey;
+    const turnAmount=diagonalTurn?direction:(facing%2===0?direction*2:direction);
+    turnPlayer(turnAmount);
+  }
   else if(code==='KeyE'){event.preventDefault();interact(false);}
   else if(code==='KeyI'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('insert');}
   else if(code==='KeyO'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('open');}
