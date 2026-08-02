@@ -160,6 +160,7 @@ let noiseTurns;
 let lastBossMove;
 let patrolIndex;
 let facing;
+let computerShiftHeld;
 let phase;
 let cleanedSpots;
 let hasMop;
@@ -529,6 +530,7 @@ function resetGame() {
   lastBossMove = 0;
   patrolIndex = 0;
   facing = 0;
+  computerShiftHeld = false;
   phase = 'intro';
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?.018:0,audioContext.currentTime,.25);
   cleanedSpots = new Set();
@@ -2247,6 +2249,7 @@ function fearEvent(time){
 }
 function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
 window.addEventListener('keydown',event=>{
+  if(event.code==='ShiftLeft'||event.code==='ShiftRight')computerShiftHeld=true;
   if(document.querySelector('#storyModal').hidden===false){
     if(event.code==='Enter'&&!event.repeat){event.preventDefault();advanceDialogue();}
     return;
@@ -2256,7 +2259,7 @@ window.addEventListener('keydown',event=>{
   if(moppingIndex>=0&&(code==='ArrowLeft'||code==='ArrowRight')){event.preventDefault();if(!event.repeat)mopStroke(code==='ArrowLeft'?'left':'right');return;}
   if(code==='ArrowUp'){event.preventDefault();moveFacing(false,event.shiftKey,false);}
   else if(code==='ArrowDown'){event.preventDefault();moveFacing(true,false,false);}
-  else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();turnPlayer((code==='ArrowLeft'?-1:1)*(event.shiftKey?1:2));}
+  else if(code==='ArrowLeft'||code==='ArrowRight'){event.preventDefault();const diagonalTurn=computerShiftHeld&&event.shiftKey;turnPlayer((code==='ArrowLeft'?-1:1)*(diagonalTurn?1:2));}
   else if(code==='KeyE'){event.preventDefault();interact(false);}
   else if(code==='KeyI'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('insert');}
   else if(code==='KeyO'){event.preventDefault();if(!event.repeat)useNearbySecurityDoor('open');}
@@ -2275,6 +2278,10 @@ window.addEventListener('keydown',event=>{
   else if(code==='KeyH'){event.preventDefault();if(!event.repeat&&!hidden){crouching=!crouching;announce(crouching?'Crouched. You can move quietly and are harder to see.':'Standing. You move normally again.',true);draw();}}
   else if(code==='KeyP'){event.preventDefault();paused=!paused;document.querySelector('#pauseCard').hidden=!paused;announce(paused?'Game paused.':'Game resumed.',true);}
 },{capture:true});
+window.addEventListener('keyup',event=>{
+  if(event.code==='ShiftLeft'||event.code==='ShiftRight')computerShiftHeld=event.shiftKey;
+},{capture:true});
+window.addEventListener('blur',()=>{computerShiftHeld=false;});
 document.querySelectorAll('[data-move]').forEach(button=>button.addEventListener('click',()=>{
   const action=button.dataset.move;
   if(action==='up')moveFacing(false,false);
