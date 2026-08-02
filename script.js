@@ -2262,7 +2262,7 @@ window.addEventListener('keydown',event=>{
   else if(code==='ArrowLeft'||code==='ArrowRight'){
     event.preventDefault();
     const direction=code==='ArrowLeft'?-1:1;
-    const diagonalTurn=computerShiftHeld&&event.shiftKey;
+    const diagonalTurn=computerShiftHeld;
     const turnAmount=diagonalTurn?direction:(facing%2===0?direction*2:direction);
     turnPlayer(turnAmount);
   }
@@ -2285,7 +2285,7 @@ window.addEventListener('keydown',event=>{
   else if(code==='KeyP'){event.preventDefault();paused=!paused;document.querySelector('#pauseCard').hidden=!paused;announce(paused?'Game paused.':'Game resumed.',true);}
 },{capture:true});
 window.addEventListener('keyup',event=>{
-  if(event.code==='ShiftLeft'||event.code==='ShiftRight')computerShiftHeld=event.shiftKey;
+  if(event.code==='ShiftLeft'||event.code==='ShiftRight')computerShiftHeld=false;
 },{capture:true});
 window.addEventListener('blur',()=>{computerShiftHeld=false;});
 document.querySelectorAll('[data-move]').forEach(button=>button.addEventListener('click',()=>{
