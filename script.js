@@ -153,6 +153,7 @@ let shelfKeys;
 let hidden;
 let crouching;
 let flashlight;
+let flashlightDistractedBoss;
 let paused;
 let running;
 let won;
@@ -310,6 +311,7 @@ const spanishExact = {
   'Office keycard collected. Mr. Hollow enters his enraged phase. Reach the loading exit southeast.':'Tarjeta recogida. El señor Hollow entra en su fase furiosa. Llega a la salida de carga al sureste.',
   'Nothing to use here.':'No hay nada que usar aquí.',
   'The store falls silent. Mr. Hollow’s location is unknown.':'La tienda queda en silencio. No se conoce la ubicación del señor Hollow.',
+  'The flashlight hits Mr. Hollow. He shields his eyes and loses your trail for fifteen seconds.':'La linterna alcanza al señor Hollow. Se cubre los ojos y pierde tu rastro durante quince segundos.',
   'Mr. Hollow is somewhere in the store. Listen for him.':'El señor Hollow está en algún lugar de la tienda. Escúchalo.',
   'Caught by Mr. Hollow. Shift ended.':'El señor Hollow te atrapó. El turno terminó.',
   'You escaped Aisle 13. Shift survived.':'Escapaste del Pasillo 13. Sobreviviste al turno.',
@@ -523,6 +525,7 @@ function resetGame() {
   hidden = false;
   crouching = false;
   flashlight = true;
+  flashlightDistractedBoss = false;
   paused = false;
   running = true;
   won = false;
@@ -1495,14 +1498,31 @@ function brassKeyPickupSound(){
   [980,1320,1760].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.06,index===0?-.3:index===2?.3:0),index*65));
 }
 function flashlightSound(){noiseBurst(.025,.06,0);tone(flashlight?1250:480,.035,0);setTimeout(()=>tone(flashlight?760:260,.045,0),38);}
+function flashlightHitsBoss(maxRange=8){
+  if(!flashlight||hidden||phase!=='escape')return false;
+  const beam=facingVectors[facing];
+  for(let step=1;step<=maxRange;step++){
+    const x=player.x+beam.x*step,y=player.y+beam.y*step;
+    if(tileBlocked(x,y))return false;
+    if(boss.x===x&&boss.y===y)return true;
+  }
+  return false;
+}
+function checkFlashlightDistraction(){
+  if(flashlightDistractedBoss||!flashlightHitsBoss())return false;
+  flashlightDistractedBoss=true;
+  bossStunnedUntil=Math.max(bossStunnedUntil,performance.now()+15000);
+  huntMemory=0;bossSearching=false;noiseTurns=0;
+  keyRattle(boss.x-player.x);setTimeout(()=>tone(95,.28,boss.x>player.x?1:-1),150);
+  announce('The flashlight hits Mr. Hollow. He shields his eyes and loses your trail for fifteen seconds.',true);
+  updateHud();draw();
+  return true;
+}
 function toggleFlashlight(){
   flashlight=!flashlight;
+  if(!flashlight)flashlightDistractedBoss=false;
   flashlightSound();
-  if(flashlight&&phase==='escape'&&manhattan(player,boss)<=3){
-    bossStunnedUntil=Math.max(bossStunnedUntil,performance.now()+1600);
-    announce('The beam catches Mr. Hollow’s eyes. He recoils, but now he knows your position.',true);
-    noiseTurns=5;
-  }else announce(`Flashlight ${flashlight?'on. It reveals dark halls but makes you easier to see.':'off. You are harder to see, but the halls are nearly black.'}`,true);
+  if(!checkFlashlightDistraction())announce(`Flashlight ${flashlight?'on. It reveals dark halls but makes you easier to see.':'off. You are harder to see, but the halls are nearly black.'}`,true);
   draw();
 }
 function eatSound(){noiseBurst(.16,.045,0);tone(330,.08,0);setTimeout(()=>tone(440,.12,0),120);}
@@ -2247,7 +2267,7 @@ function fearEvent(time){
   if(time>=nextJumpScareAt&&Math.random()<(flashlight ? .2 : .34))triggerJumpScare(Math.random()<.5?'SOMETHING MOVED.':'DON’T MOVE.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
-function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
+function gameLoop(time){checkFlashlightDistraction();bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
 window.addEventListener('keydown',event=>{
   if(event.code==='ShiftLeft'||event.code==='ShiftRight')computerShiftHeld=true;
   if(document.querySelector('#storyModal').hidden===false){
