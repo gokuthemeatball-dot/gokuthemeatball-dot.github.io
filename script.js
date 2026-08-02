@@ -193,6 +193,7 @@ let scentMaskUntil;
 let flickerUntil;
 let lastFearEvent;
 let lastJumpScare;
+let nextJumpScareAt;
 let customersServed;
 let dialogueSteps;
 let dialogueIndex;
@@ -202,6 +203,7 @@ let lastKnownPlayer;
 let huntMemory;
 let bossSearching;
 let lastAmbush;
+let nextAmbushAt;
 let dangerMusicActive;
 let dangerNearSince;
 let dangerFarSince;
@@ -555,6 +557,7 @@ function resetGame() {
   flickerUntil = 0;
   lastFearEvent = 0;
   lastJumpScare = -20000;
+  nextJumpScareAt = performance.now()+4500+Math.random()*5000;
   customersServed = 0;
   dialogueSteps = [];
   dialogueIndex = 0;
@@ -564,6 +567,7 @@ function resetGame() {
   huntMemory = 0;
   bossSearching = false;
   lastAmbush = 0;
+  nextAmbushAt = performance.now()+8000+Math.random()*9000;
   dangerMusicActive = false;
   dangerNearSince = 0;
   dangerFarSince = 0;
@@ -714,12 +718,10 @@ function updateHud() {
   wedgeItem.classList.toggle('found',hasDoorJammer);
   maskItem.textContent=`${language==='es'?'MÁSCARA DE OLOR':'SCENT MASK'} ${hasScentMask?'●':'○'}`;
   maskItem.classList.toggle('found',hasScentMask);
-  const distance = manhattan(player, boss);
   if(phase!=='escape'){dangerStatus.textContent=language==='es'?(phase==='customers'?'TIENDA: ABIERTA':'TURNO: NORMAL'):(phase==='customers'?'STORE: OPEN':'SHIFT: NORMAL');dangerStatus.style.color='#c7ff4a';return;}
   const bossPhase=language==='es'?(hasKey?'FURIOSO':powerOn?'CAZANDO':'ACECHANDO'):(hasKey?'ENRAGED':powerOn?'HUNTING':'STALKING');
-  const dangerDistance=language==='es'?(distance<=3?'CRÍTICO':distance<=7?'CERCA':'LEJOS'):(distance<=3?'CRITICAL':distance<=7?'NEAR':'DISTANT');
-  dangerStatus.textContent = `${bossPhase}: ${dangerDistance}`;
-  dangerStatus.style.color = distance <= 3 ? '#ff414d' : distance <= 7 ? '#ffc44a' : '#c7ff4a';
+  dangerStatus.textContent = `${bossPhase}: ${language==='es'?'UBICACIÓN DESCONOCIDA':'LOCATION UNKNOWN'}`;
+  dangerStatus.style.color = '#ff414d';
 }
 
 function movePlayer(dx, dy, quiet = false, energyCost = 1, allowDoorPush = true) {
@@ -1002,14 +1004,15 @@ function bossStep(time) {
   const seesPlayer = !hidden&&manhattan(player,boss) <= Math.max(scentMasked?1:2,baseSight-(crouching?3:0)-(scentMasked?4:0));
   const distanceBeforeMove=manhattan(player,boss);
   if(distanceBeforeMove>7&&Math.random()<.08)return;
-  if(time-lastAmbush>14000&&distanceBeforeMove>14&&Math.random()<.14){
-    const ambushPoints=patrolPoints.filter(point=>{const distance=manhattan(player,point);return distance>=7&&distance<=12;});
+  if(time>=nextAmbushAt&&distanceBeforeMove>8){
+    const ambushPoints=patrolPoints.filter(point=>{const distance=manhattan(player,point);return distance>=6&&distance<=13&&!tileBlocked(point.x,point.y);});
     if(ambushPoints.length){
       boss={...ambushPoints[Math.floor(Math.random()*ambushPoints.length)]};
       lastAmbush=time;
       patrolIndex=Math.floor(Math.random()*patrolPoints.length);
       if(blindMode)announce('The store falls silent. Mr. Hollow’s location is unknown.',true);
     }
+    nextAmbushAt=time+9000+Math.random()*11000;
   }
   let target;
   if(lureTurns>0&&lureTarget){
@@ -1052,7 +1055,7 @@ function bossStep(time) {
     spatialCue(boss.x-player.x, distance <= 2 ? 75 : 105);
     if(distance<=4)heartbeatSound(distance);
     if (Math.random() < .18) keyRattle(boss.x-player.x);
-    if(distance<=4&&time-lastJumpScare>7500&&Math.random()<.32)triggerJumpScare(distance<=2?'HE FOUND YOU.':'DON’T MOVE.',false);
+    if(distance<=5&&time>=nextJumpScareAt&&Math.random()<.58)triggerJumpScare(distance<=2?'HE FOUND YOU.':Math.random()<.5?'DON’T MOVE.':'SOMETHING MOVED.',false);
     if (blindMode && distance === 3) announce(`Danger. Mr. Hollow is ${directionWords(boss.x-player.x,boss.y-player.y)}, three steps away.`,true);
   }
   updateHud();
@@ -1223,12 +1226,6 @@ function draw() {
     if(crouching){ctx.fillStyle='#b7c2be';ctx.font='8px IBM Plex Mono';ctx.fillText('CROUCHED',player.x*TILE-2,player.y*TILE+34);}
   } else {
     ctx.fillStyle='#c7ff4a';ctx.font='bold 11px IBM Plex Mono';ctx.fillText('HIDDEN',player.x*TILE-4,player.y*TILE+5);
-  }
-  if(phase==='escape'&&manhattan(player,boss)<=7){
-    const bx=boss.x*TILE+20,by=boss.y*TILE+20;
-    ctx.shadowColor='#000';ctx.shadowBlur=18;ctx.fillStyle='#111616';ctx.fillRect(bx-15,by-18,30,38);ctx.shadowBlur=0;
-    ctx.fillStyle='#ff414d';ctx.fillRect(bx-8,by-6,5,3);ctx.fillRect(bx+3,by-6,5,3);
-    ctx.fillStyle='#e7ede9';ctx.fillRect(bx-2,by+2,4,13);
   }
   if(!powerOn){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,canvas.width,canvas.height);}
   if(flashlight&&!hidden&&!powerOn){
@@ -1972,7 +1969,7 @@ function updateSurpriseSound(distance){
   if(visible&&!bossWasVisible){
     bossWasVisible=true;
     playSurpriseSound();
-    if(distance<=5&&performance.now()-lastJumpScare>8000)triggerJumpScare('SOMETHING MOVED.',false);
+    if(distance<=6&&performance.now()>=nextJumpScareAt&&Math.random()<.7)triggerJumpScare('SOMETHING MOVED.',false);
   }else if(!visible&&(hidden||distance>=9)){
     bossWasVisible=false;
   }
@@ -2197,11 +2194,16 @@ function spatialCue(dx,frequency){tone(frequency,.13,Math.max(-1,Math.min(1,dx/5
 function keyRattle(dx){[1480,1810,1320].forEach((f,i)=>setTimeout(()=>tone(f,.025,Math.max(-1,Math.min(1,dx/5))),i*42));}
 function triggerJumpScare(text='RUN.',force=false){
   const now=performance.now();
-  if(!force&&now-lastJumpScare<10000)return;
+  if(!force&&now<nextJumpScareAt)return;
   lastJumpScare=now;
+  nextJumpScareAt=now+4500+Math.random()*6500;
   const scare=document.querySelector('#jumpScare');
   const spanishScares={'RUN.':'CORRE.','DON’T MOVE.':'NO TE MUEVAS.','CAUGHT.':'ATRAPADO.','HE FOUND YOU.':'TE ENCONTRÓ.','DON’T LET HIM LOCK IT.':'NO DEJES QUE CIERRE.','THE LOCK TURNS.':'LA CERRADURA GIRA.','YOU TORE FREE.':'TE LIBERASTE.','SOMETHING MOVED.':'ALGO SE MOVIÓ.'};
   document.querySelector('#jumpScareText').textContent=language==='es'?(spanishScares[text]||text):text;
+  scare.style.setProperty('--scare-x',`${12+Math.random()*76}%`);
+  scare.style.setProperty('--scare-y',`${8+Math.random()*70}%`);
+  scare.style.setProperty('--scare-scale',`${1.25+Math.random()*.65}`);
+  scare.style.setProperty('--scare-text-x',`${18+Math.random()*64}%`);
   scare.hidden=false;
   document.body.classList.add('danger-flash');
   noiseBurst(.55,.22,boss.x>player.x?1:-1);
@@ -2230,7 +2232,7 @@ function fearEvent(time){
     noiseBurst(.32,.055,0);
     setTimeout(()=>playStoreSpeakerRecording(messageIndex,message),180);
   }
-  if(!flashlight&&Math.random()<.22)triggerJumpScare('SOMETHING MOVED.',false);
+  if(time>=nextJumpScareAt&&Math.random()<(flashlight ? .34 : .62))triggerJumpScare(Math.random()<.5?'SOMETHING MOVED.':'DON’T MOVE.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
 function gameLoop(time){bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
