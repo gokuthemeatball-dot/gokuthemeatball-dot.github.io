@@ -112,7 +112,8 @@ const hollowHidingPoints = [
   {x:15,y:7},{x:23,y:12},{x:9,y:13}
 ];
 const cameraRoomEntrance = {x:13,y:3};
-const cameraTransportButton = {x:13,y:1};
+const cameraTransportButton = {x:12,y:1};
+const cameraScanConsole = {x:14,y:1};
 const cameraRoomFloor = new Set(['12,1','13,1','14,1','12,2','13,2','14,2','13,3']);
 const cameraTransportDestinations = [
   {x:2,y:12},{x:11,y:12},{x:22,y:12},{x:29,y:16},{x:22,y:7},{x:3,y:7}
@@ -134,11 +135,15 @@ const shelfKeyCandidates = [
 
 const walls = new Set();
 const shelfTiles = new Set();
+const darkHallwayTiles = new Set();
 for (let x = 0; x < COLS; x++) { walls.add(`${x},0`); walls.add(`${x},${ROWS - 1}`); }
 for (let y = 0; y < ROWS; y++) { walls.add(`0,${y}`); walls.add(`${COLS - 1},${y}`); }
 // A sealed surveillance room. Its only opening is the south entrance at 13,3.
 for(let y=1;y<=3;y++){walls.add(`11,${y}`);walls.add(`15,${y}`);}
 walls.add('12,3');walls.add('14,3');
+for(let y=6;y<=15;y++)for(let x=10;x<=12;x++)darkHallwayTiles.add(`${x},${y}`);
+for(let y=6;y<=15;y++)for(let x=21;x<=23;x++)darkHallwayTiles.add(`${x},${y}`);
+for(let y=12;y<=13;y++)for(let x=2;x<=29;x++)darkHallwayTiles.add(`${x},${y}`);
 [
   [4,4,6,2],[4,9,6,2],[4,14,6,2],
   [13,4,8,2],[13,9,8,2],[13,14,8,2],
@@ -243,6 +248,8 @@ let nextExhaustedMoveAt;
 let trailLostUntil;
 let cameraAlertActive;
 let lastCameraAlertAt;
+let cameraScanUntil;
+let wasInDarkHallway;
 let audioContext;
 let ambientGain;
 let lastAnnouncement = '';
@@ -327,9 +334,13 @@ const spanishExact = {
   'Camera room. The surveillance screens reveal store fixtures and items, but never Mr. Hollow’s location. He cannot enter this room. The transport button is at the north wall.':'Sala de cámaras. Las pantallas de vigilancia muestran los objetos y lugares de la tienda, pero nunca la ubicación del señor Hollow. No puede entrar en esta sala. El botón de transporte está en la pared norte.',
   'Camera warning. Movement detected outside the secure room. Mr. Hollow cannot enter.':'Alerta de cámara. Movimiento detectado fuera de la sala segura. El señor Hollow no puede entrar.',
   'Camera clear. No movement is detected near the secure room.':'Cámara despejada. No se detecta movimiento cerca de la sala segura.',
+  'Camera alarm. Movement is still close to the secure room.':'Alarma de cámara. El movimiento sigue cerca de la sala segura.',
   'The camera room does not reveal Mr. Hollow’s location. Its motion alarm will warn you if he approaches.':'La sala de cámaras no revela la ubicación del señor Hollow. La alarma de movimiento te avisará si se acerca.',
+  'Camera controls. The transport button is on the left. The surveillance console is on the right.':'Controles de cámara. El botón de transporte está a la izquierda. La consola de vigilancia está a la derecha.',
   'Transport button ready. Press Interact to move to another part of the store and erase your trail for one minute.':'Botón de transporte listo. Usa Interactuar para ir a otra parte de la tienda y borrar tu rastro durante un minuto.',
+  'Surveillance console ready. Press Interact to scan objectives, supplies, and exits without revealing Mr. Hollow.':'Consola de vigilancia lista. Usa Interactuar para buscar objetivos, provisiones y salidas sin revelar al señor Hollow.',
   'The camera flashes white. You arrive somewhere else in the store. Mr. Hollow loses your trail for one minute.':'La cámara emite un destello blanco. Apareces en otra parte de la tienda. El señor Hollow pierde tu rastro durante un minuto.',
+  'This hallway has no working lights. Turn on the flashlight to see, or use spoken navigation and the audio compass.':'Este pasillo no tiene luces. Enciende la linterna para ver o usa la navegación hablada y la brújula de audio.',
   'The flashlight hits Mr. Hollow. He shields his eyes and loses your trail for fifteen seconds.':'La linterna alcanza al señor Hollow. Se cubre los ojos y pierde tu rastro durante quince segundos.',
   'Mr. Hollow is somewhere in the store. Listen for him.':'El señor Hollow está en algún lugar de la tienda. Escúchalo.',
   'Caught by Mr. Hollow. Shift ended.':'El señor Hollow te atrapó. El turno terminó.',
@@ -340,7 +351,7 @@ const spanishExact = {
   'Noise lure deployed. Mr. Hollow turns toward the sound.':'Señuelo de ruido desplegado. El señor Hollow se dirige hacia el sonido.',
   'Door jammer placed here. Lead Mr. Hollow across this tile to stop him.':'Bloqueador colocado. Haz que el señor Hollow pase por aquí para detenerlo.',
   'The final spill is clean. The lights die. Mr. Hollow locks the doors. You pocket three food portions. First build the required guidance map, then find the fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Tienes tres porciones de comida. Primero construye el mapa de guía obligatorio, después encuentra el fusible y escapa.',
-  'The final spill is clean. The lights die. Mr. Hollow locks the doors. Your guidance map is already in your pocket, but you have no food. Find supplies, then use the map to reach the fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Ya tienes el mapa de guía, pero no tienes comida. Encuentra provisiones y usa el mapa para llegar al fusible y escapar.',
+  'The final spill is clean. The lights die. Mr. Hollow locks the doors. Your flashlight clicks off. Turn it on to cross dark hallways. Your guidance map is already in your pocket, but you have no food. Find supplies, then use the map to reach the fuse and escape.':'Limpiaste el último derrame. Las luces se apagan y el señor Hollow cierra las puertas. Tu linterna se apaga. Enciéndela para cruzar los pasillos oscuros. Ya tienes el mapa de guía, pero no tienes comida. Encuentra provisiones y usa el mapa para llegar al fusible y escapar.',
   'Mr. Hollow locked you in the stockroom. Shift ended.':'El señor Hollow te encerró en el almacén. El turno terminó.',
   'Crouched. You move quietly.':'Agachado. Te mueves en silencio.',
   'Standing.':'De pie.',
@@ -620,6 +631,8 @@ function resetGame() {
   trailLostUntil = 0;
   cameraAlertActive = false;
   lastCameraAlertAt = 0;
+  cameraScanUntil = 0;
+  wasInDarkHallway = false;
   if(battleTimer){clearTimeout(battleTimer);battleTimer=null;}
   document.querySelector('#battleModal').hidden=true;
   closeByWasNear = false;
@@ -796,6 +809,9 @@ function movePlayer(dx, dy, quiet = false, energyCost = 1, allowDoorPush = true)
   noiseTurns = quiet||crouching ? 0 : 2;
   footstepSound(dx);
   describeTile();
+  const inDarkHallway=phase==='escape'&&isDarkHallway(player)&&!isInCameraRoom(player);
+  if(inDarkHallway&&!wasInDarkHallway&&!flashlight)announce('This hallway has no working lights. Turn on the flashlight to see, or use spoken navigation and the audio compass.',true);
+  wasInDarkHallway=inDarkHallway;
   updateHud();
   draw();
   checkCaught();
@@ -834,7 +850,9 @@ function jumpForward(){
 
 function describeTile() {
   if(isInCameraRoom(player)){
-    announce(manhattan(player,cameraTransportButton)<=1?'Transport button ready. Press Interact to move to another part of the store and erase your trail for one minute.':'Camera room. The surveillance screens reveal store fixtures and items, but never Mr. Hollow’s location. He cannot enter this room. The transport button is at the north wall.',true);
+    if(player.x<=12&&manhattan(player,cameraTransportButton)<=1)announce('Transport button ready. Press Interact to move to another part of the store and erase your trail for one minute.',true);
+    else if(player.x>=14&&manhattan(player,cameraScanConsole)<=1)announce('Surveillance console ready. Press Interact to scan objectives, supplies, and exits without revealing Mr. Hollow.',true);
+    else announce('Camera controls. The transport button is on the left. The surveillance console is on the right.',true);
     return;
   }
   const nearby = nearestImportant();
@@ -884,6 +902,10 @@ function interact(allowDoorAction=true) {
       return;
     }
     announce(hasMop?`Find the next marked spill. ${cleaningSpots.length-cleanedSpots.size} remain.`:'The mop is in the supply closet beside the front checkout.',true);
+    return;
+  }
+  if(phase==='escape'&&player.x>=13&&manhattan(player,cameraScanConsole)<=1){
+    useCameraScan();
     return;
   }
   if(phase==='escape'&&manhattan(player,cameraTransportButton)<=1){
@@ -1053,6 +1075,21 @@ function audioCompass() {
 }
 
 function isInCameraRoom(point){return cameraRoomFloor.has(`${point.x},${point.y}`);}
+function isDarkHallway(point){return darkHallwayTiles.has(`${point.x},${point.y}`);}
+
+function useCameraScan(){
+  if(!running||paused||phase!=='escape')return;
+  cameraScanUntil=performance.now()+12000;
+  const foodRemaining=foodSpots.filter((spot,index)=>!eatenFood.has(index)).length;
+  const keysRemaining=shelfKeys.filter(key=>!key.collected).length;
+  const partsRemaining=[!hasBottle,!hasCleaner,!hasCan,!hasBattery,!hasCamera,!hasFlashCell,!hasHandle,!hasTape,!hasRag,!hasCoffee].filter(Boolean).length;
+  cameraScanSound();
+  const message=language==='es'
+    ?`Escaneo de vigilancia. Objetivo: ${translateText(objective())} Provisiones detectadas: ${foodRemaining} alimentos, ${keysRemaining} llaves de latón y ${partsRemaining} piezas para fabricar. Las salidas y puertas de seguridad están visibles. La ubicación del señor Hollow permanece oculta.`
+    :`Surveillance scan. Objective: ${objective()} Remaining supplies detected: ${foodRemaining} food, ${keysRemaining} brass keys, and ${partsRemaining} crafting parts. Exits and security doors are visible. Mr. Hollow’s location remains hidden.`;
+  announce(message,true);
+  draw();
+}
 
 function useCameraTransport(){
   if(!running||paused||phase!=='escape')return;
@@ -1076,10 +1113,14 @@ function updateCameraRoomAlert(time){
   const approaching=manhattan(boss,cameraRoomEntrance)<=5;
   if(approaching&&!cameraAlertActive){
     cameraAlertActive=true;lastCameraAlertAt=time;
-    [920,620,920].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.09,index%2?-.45:.45),index*135));
+    cameraAlarmSound();
     if(navigator.vibrate)navigator.vibrate([80,55,80]);
     announce('Camera warning. Movement detected outside the secure room. Mr. Hollow cannot enter.',true);
     updateHud();
+  }else if(approaching&&cameraAlertActive&&time-lastCameraAlertAt>8000){
+    lastCameraAlertAt=time;
+    cameraAlarmSound();
+    announce('Camera alarm. Movement is still close to the secure room.',true);
   }else if(!approaching&&cameraAlertActive&&time-lastCameraAlertAt>1200){
     cameraAlertActive=false;
     announce('Camera clear. No movement is detected near the secure room.',true);
@@ -1318,6 +1359,7 @@ function draw() {
   if(phase==='escape'&&!hasFuse)drawMarker(fuse,'#ffc44a','F');
   if(phase==='escape'&&powerOn&&!hasKey)drawMarker(keycard,'#54cfff','K');
   if(phase==='escape')drawMarker(exit,hasKey?'#c7ff4a':'#5a665f','EXIT');
+  if(isInCameraRoom(player)&&performance.now()<cameraScanUntil)drawCameraScanOverlay();
   if(!hidden) {
     ctx.beginPath();ctx.fillStyle=crouching?'#73827e':flashlight?'#c7ff4a':'#9aa8a3';ctx.arc(player.x*TILE+20,player.y*TILE+20,crouching?7:11,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
@@ -1328,6 +1370,10 @@ function draw() {
     ctx.fillStyle='#c7ff4a';ctx.font='bold 11px IBM Plex Mono';ctx.fillText('HIDDEN',player.x*TILE-4,player.y*TILE+5);
   }
   if(!powerOn&&!isInCameraRoom(player)){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,canvas.width,canvas.height);}
+  if(phase==='escape'&&!isInCameraRoom(player)){
+    ctx.fillStyle=flashlight?'rgba(0,0,0,.68)':'rgba(0,0,0,.88)';
+    darkHallwayTiles.forEach(key=>{const [x,y]=key.split(',').map(Number);ctx.fillRect(x*TILE,y*TILE,TILE,TILE);});
+  }
   if(flashlight&&!hidden&&!powerOn){
     const gradient=ctx.createRadialGradient(player.x*TILE+20,player.y*TILE+20,10,player.x*TILE+20,player.y*TILE+20,150);
     gradient.addColorStop(0,'rgba(220,255,180,.38)');gradient.addColorStop(1,'rgba(0,0,0,0)');
@@ -1338,6 +1384,27 @@ function draw() {
   }
   if(jammerSpot)drawMarker(jammerSpot,'#ff9f43','JAM');
   if(performance.now()<flickerUntil){ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(0,0,canvas.width,canvas.height);}
+}
+
+function drawCameraScanOverlay(){
+  const targets=[];
+  foodSpots.forEach((spot,index)=>{if(!eatenFood.has(index))targets.push(spot);});
+  shelfKeys.forEach(key=>{if(!key.collected)targets.push(key);});
+  if(!hasBottle)targets.push(bottleSpot);if(!hasCleaner)targets.push(cleanerSpot);
+  if(!hasCan)targets.push(canSpot);if(!hasBattery)targets.push(batterySpot);
+  if(!hasCamera)targets.push(cameraSpot);if(!hasFlashCell)targets.push(flashCellSpot);
+  if(!hasHandle)targets.push(handleSpot);if(!hasTape)targets.push(tapeSpot);
+  if(!hasRag)targets.push(ragSpot);if(!hasCoffee)targets.push(coffeeSpot);
+  ctx.save();
+  ctx.strokeStyle='#8be7ff';ctx.lineWidth=2;ctx.setLineDash([3,4]);
+  targets.forEach(point=>{ctx.beginPath();ctx.arc(point.x*TILE+20,point.y*TILE+20,17,0,Math.PI*2);ctx.stroke();});
+  ctx.setLineDash([]);
+  const goal=currentGoal();ctx.strokeStyle='#c7ff4a';ctx.lineWidth=3;ctx.strokeRect(goal.x*TILE+5,goal.y*TILE+5,TILE-10,TILE-10);
+  const sweep=((performance.now()/14)%canvas.width);
+  const gradient=ctx.createLinearGradient(sweep-90,0,sweep+30,0);
+  gradient.addColorStop(0,'rgba(84,207,255,0)');gradient.addColorStop(1,'rgba(84,207,255,.18)');
+  ctx.fillStyle=gradient;ctx.fillRect(Math.max(0,sweep-90),0,120,canvas.height);
+  ctx.restore();
 }
 
 function drawCameraRoom(){
@@ -1358,6 +1425,10 @@ function drawCameraRoom(){
   ctx.fillStyle='#080c0d';ctx.beginPath();ctx.arc(buttonX,buttonY,8,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle='#c7ff4a';ctx.lineWidth=2;ctx.stroke();
   ctx.fillStyle='#dce8e4';ctx.font='bold 7px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(language==='es'?'TRANSP.':'TRANSPORT',buttonX,buttonY+17);
+  const scanX=cameraScanConsole.x*TILE+20,scanY=cameraScanConsole.y*TILE+29;
+  ctx.fillStyle='#080c0d';ctx.beginPath();ctx.arc(scanX,scanY,8,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8be7ff';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#dce8e4';ctx.fillText(language==='es'?'ESCANEAR':'SCAN',scanX,scanY+17);
   ctx.fillStyle='#8be7ff';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'SALA DE CÁMARAS':'CAMERA ROOM',13*TILE+20,3*TILE+34);
   ctx.textAlign='start';ctx.restore();
 }
@@ -1604,6 +1675,13 @@ function insertKeySound(){
 }
 function brassKeyPickupSound(){
   [980,1320,1760].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.06,index===0?-.3:index===2?.3:0),index*65));
+}
+function cameraAlarmSound(){
+  [1040,720,1040,720,1320].forEach((frequency,index)=>setTimeout(()=>{tone(frequency,.12,index%2?-.65:.65);if(index<4)noiseBurst(.045,.045,index%2?-.55:.55);},index*145));
+}
+function cameraScanSound(){
+  [420,560,740,980,1240].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.07,-.7+index*.35),index*72));
+  setTimeout(()=>noiseBurst(.24,.035,0),120);
 }
 function flashlightSound(){noiseBurst(.025,.06,0);tone(flashlight?1250:480,.035,0);setTimeout(()=>tone(flashlight?760:260,.045,0),38);}
 function flashlightHitsBoss(maxRange=8){
@@ -2295,6 +2373,8 @@ function beginHorror(){
   phase='escape';
   if(ambientGain)ambientGain.gain.setTargetAtTime(soundToggle.checked?.065:0,audioContext.currentTime,.65);
   powerOn=false;
+  flashlight=false;
+  flashlightDistractedBoss=false;
   foodPortions=0;
   hasPaper=true;
   hasMarker=true;
@@ -2318,7 +2398,7 @@ function beginHorror(){
     playLightsOutMusic();
     setTimeout(()=>tone(55,.7,0),430);
   },550);
-  announce('The final spill is clean. The lights die. Mr. Hollow locks the doors. Your guidance map is already in your pocket, but you have no food. Find supplies, then use the map to reach the fuse and escape.',true);
+  announce('The final spill is clean. The lights die. Mr. Hollow locks the doors. Your flashlight clicks off. Turn it on to cross dark hallways. Your guidance map is already in your pocket, but you have no food. Find supplies, then use the map to reach the fuse and escape.',true);
 }
 document.querySelector('#fightButton').addEventListener('click',fightBack);
 document.querySelector('#battleModal').addEventListener('pointerdown',event=>{
