@@ -415,6 +415,12 @@ Object.assign(spanishExact,{
   ,'A damaged training tape says: If the manager learns your route, change it. He remembers repeated footsteps.':'Una cinta de entrenamiento dañada dice: Si el gerente aprende tu ruta, cámbiala. Recuerda los pasos repetidos.'
   ,'The night ledger already contains your name. It lists every shift you will work for the next thirteen years.':'El registro nocturno ya contiene tu nombre. Enumera cada turno que trabajarás durante los próximos trece años.'
   ,'Mr. Hollow is watching from the service desk.':'El señor Hollow observa desde el mostrador de servicio.'
+  ,'Camera room':'Sala de cámaras'
+  ,'Mop collected. Clean the two marked spills with Interact.':'Trapeador recogido. Limpia los dos derrames marcados con Interactuar.'
+  ,'Mop ready. Scrub left and right repeatedly until the spill is clean.':'Trapeador listo. Frota repetidamente de izquierda a derecha hasta limpiar el derrame.'
+  ,'You need the mop from the supply closet before you can clean this spill.':'Necesitas el trapeador del armario de suministros para limpiar este derrame.'
+  ,'Flashlight on. It reveals dark halls but makes you easier to see.':'Linterna encendida. Revela los pasillos oscuros, pero hace que sea más fácil verte.'
+  ,'Flashlight off. You are harder to see, but the halls are nearly black.':'Linterna apagada. Es más difícil verte, pero los pasillos están casi completamente oscuros.'
 });
 
 function translateText(message){
@@ -426,6 +432,7 @@ function translateText(message){
     .replace(/^Facing east\.$/,'Mirando al este.')
     .replace(/^Facing west\.$/,'Mirando al oeste.')
     .replace(/^Danger\. Mr\. Hollow is (.+), (\d+) steps\.$/,'Peligro. El señor Hollow está $1, a $2 pasos.')
+    .replace(/^Facing (north-east|south-east|south-west|north-west)\.$/,'Mirando hacia el $1.')
     .replace(/\bnortheast\b/gi,'noreste').replace(/\bnorthwest\b/gi,'noroeste').replace(/\bsoutheast\b/gi,'sureste').replace(/\bsouthwest\b/gi,'suroeste')
     .replace(/\bnorth\b/gi,'norte').replace(/\bsouth\b/gi,'sur').replace(/\beast\b/gi,'este').replace(/\bwest\b/gi,'oeste')
     .replace(/\bsteps?\b/gi,'pasos').replace(/\bremaining\b/gi,'restantes').replace(/\bleft\b/gi,'restantes')
@@ -443,6 +450,8 @@ function translateText(message){
     .replace(/^Mystery fragment (\d+) of 4\. /,'Fragmento del misterio $1 de 4. ')
     .replace(/^Required lost memory is (.+), (\d+) steps away\.$/,'El recuerdo perdido obligatorio está hacia $1, a $2 pasos.')
     .replace(/^Nothing to use here\. /,'No hay nada que usar aquí. ')
+    .replace(/^Scrubbing\. (\d+) strokes remain\.$/,'Limpiando. Quedan $1 pasadas.')
+    .replace(/^(.+) is (.+), (\d+) steps away\.$/,'$1 está hacia $2, a $3 pasos.')
     .replace(/\bFront checkout\b/g,'Caja principal').replace(/\bStockroom\b/g,'Almacén').replace(/\bLoading bay\b/g,'Zona de carga').replace(/\bBack aisle\b/g,'Pasillo trasero').replace(/\bManager office hall\b/g,'Pasillo de la oficina del gerente')
     .replace(/\bCheckout\b/g,'Caja').replace(/\bNext spill\b/g,'Siguiente derrame').replace(/\bSpill\b/g,'Derrame').replace(/\bFuse\b/g,'Fusible').replace(/\bBreaker\b/g,'Interruptor').replace(/\bKeycard\b/g,'Tarjeta').replace(/\bExit\b/g,'Salida')
     .replace(/\bHiding place\b/g,'Escondite').replace(/\bFood\b/g,'Comida').replace(/\bEmpty bottle\b/g,'Botella vacía').replace(/\bCleaner\b/g,'Limpiador').replace(/\bEmpty can\b/g,'Lata vacía').replace(/\bBatteries\b/g,'Baterías').replace(/\bCamera room\b/g,'Sala de cámaras').replace(/\bCamera\b/g,'Cámara').replace(/\bFlash cell\b/g,'Celda de flash').replace(/\bHandle\b/g,'Mango').replace(/\bDuct tape\b/g,'Cinta adhesiva').replace(/\bRag\b/g,'Trapo').replace(/\bCoffee\b/g,'Café').replace(/\bMystery fragment\b/g,'Fragmento del misterio').replace(/\bLost memory\b/g,'Recuerdo perdido').replace(/\bBrass key\b/g,'Llave de latón').replace(/\bLocked security door\b/g,'Puerta de seguridad cerrada')
@@ -459,6 +468,12 @@ function applyLanguage(){
   languageSelect.value=language;
   document.documentElement.lang=language;
   const es=language==='es';
+  document.title=es?'Turno Nocturno: Pasillo 13':'Night Shift: Aisle 13';
+  document.querySelector('#startModal .kicker').textContent=es?'TURNO NOCTURNO':'NIGHT SHIFT';
+  document.querySelector('#startTitle').textContent=es?'PASILLO 13':'AISLE 13';
+  document.querySelector('header .wordmark strong').textContent=es?'PASILLO 13':'AISLE 13';
+  document.querySelector('.manager-card h1').textContent=es?'SEÑOR HOLLOW':'MR. HOLLOW';
+  languageSelect.options[0].textContent=es?'Inglés':'English';
   document.querySelector('#accessTitle').textContent=es?'Visual, audio o ambos':'Visual, audio, or both';
   document.querySelector('#accessDescription').textContent=es?'Jugadores con visión, ciegos y con baja visión comparten la misma historia, mapa, objetivos y dificultad. Elige la información que te funcione mejor.':'Sighted, blind, and low-vision players share the same story, map, objectives, and difficulty. Choose the information that works best for you.';
   document.querySelector('#accessTalkBackHint').textContent=es?'TalkBack o Jieshuo: desliza a la derecha o izquierda por cada opción y toca dos veces para cambiarla. Elige Listo cuando termines.':'TalkBack or Jieshuo: swipe right or left through every option, then double tap to change it. Choose Done when ready.';
@@ -508,7 +523,7 @@ function applyLanguage(){
   document.querySelector('.touch-controls').setAttribute('aria-label',es?'Controles táctiles del juego':'Touch game controls');
   document.querySelector('.touch-actions').setAttribute('aria-label',es?'Controles de acciones del juego':'Game action controls');
   document.querySelector('#touchInteract').setAttribute('aria-label',es?'Interactuar, recoger, abrir, limpiar, atender, comer u ocultarse':'Interact, collect, open, clean, serve, eat, or hide');
-  canvas.setAttribute('aria-label',es?'Mapa de Night Shift. Ante una puerta de seguridad, I inserta una llave, O la abre y C la cierra. L activa la brújula de audio. E realiza las demás interacciones.':'Night Shift game map. At a security door, I inserts a key, O opens it, and C closes it. L activates the audio compass. E handles other interactions.');
+  canvas.setAttribute('aria-label',es?'Mapa del juego Turno Nocturno. Las flechas izquierda y derecha giran. Arriba avanza y abajo retrocede. Mayúsculas más Arriba corre. Ante una puerta de seguridad, I inserta una llave, O la abre y C la cierra. E interactúa, F controla la linterna y L activa la brújula de audio.':'Night Shift game map. Left and right arrows turn. Up walks forward. Down walks backward. Shift plus Up runs. At a security door, I inserts a key, O opens it, and C closes it. E handles other interactions, F controls the flashlight, and L activates the audio compass.');
   document.querySelector('.manager-portrait').alt=es?'El señor Hollow, un gerente de supermercado alto y pálido con un viejo chaleco verde y un pesado llavero.':'Mr. Hollow, a tall pale supermarket manager in an old green vest, holding a heavy ring of keys.';
   document.querySelector('.story-card img').alt=es?'El señor Hollow detrás del mostrador de servicio del supermercado.':'Mr. Hollow standing behind the supermarket service counter.';
   document.querySelector('.start-art').alt=es?'Un pasillo oscuro de supermercado abandonado con el señor Hollow bajo luces fluorescentes que fallan.':'A dark abandoned supermarket aisle with Mr. Hollow standing beneath failing fluorescent lights.';
@@ -517,7 +532,8 @@ function applyLanguage(){
   gesturePad.setAttribute('aria-label',es?'Panel de gestos. Junto a una puerta cerrada, desliza cuatro dedos a la derecha para insertar y girar una llave; desliza cuatro dedos a la izquierda para abrirla o cerrarla. Desliza y mantén hacia arriba para caminar y hacia abajo para retroceder. Toca tres veces para la linterna, una vez con dos dedos para agacharte, dos veces con dos dedos para comer y una vez con tres dedos para saltar.':'Gesture pad. Beside a locked door, swipe four fingers right to insert and turn a key; swipe four fingers left to open or close it. Swipe and hold up to walk and down to move backward. Triple tap toggles the flashlight. Two-finger single tap crouches. Two-finger double tap eats. Three-finger single tap jumps.');
   visualMessage.textContent=translateText(visualMessage.dataset.message||visualMessage.textContent);
   updateGestureItemStatus();
-  if(running){updateHud();draw();}
+  updateHud();
+  if(running)draw();
 }
 
 async function enterGestureFullscreen(){
@@ -822,7 +838,7 @@ const facingNames = ['north','north-east','east','south-east','south','south-wes
 function turnPlayer(amount) {
   if (!running || paused || hidden) return;
   facing = (facing + amount + 8) % 8;
-  announce(`Facing ${facingNames[facing]}.`, blindMode);
+  announce(language==='es'?`Mirando hacia el ${localizedDirection(facingNames[facing])}.`:`Facing ${facingNames[facing]}.`, blindMode);
   tone(260,.035,amount);
   draw();
 }
@@ -1068,8 +1084,14 @@ function audioCompass() {
   const goalName = phase==='customers' ? 'Checkout' : phase==='cleaning' ? (hasMop?'Next spill':'Mop closet') : !hasFuse ? 'Fuse' : !powerOn ? 'Breaker' : !hasKey ? 'Keycard' : 'Exit';
   const enemyDistance=manhattan(player,boss);
   const enemyDirection = directionWords(boss.x-player.x,boss.y-player.y);
-  const dangerLine=phase!=='escape'?'Mr. Hollow is watching from the service desk.':isInCameraRoom(player)?'The camera room does not reveal Mr. Hollow’s location. Its motion alarm will warn you if he approaches.':enemyDistance<=5?`Danger. Mr. Hollow is ${enemyDirection}, ${enemyDistance} steps.`:'Mr. Hollow is somewhere in the store. Listen for him.';
-  announce(`${goalName}: ${directionWords(goal.x-player.x,goal.y-player.y)}, ${manhattan(player,goal)} steps. ${dangerLine}`, true);
+  const dangerLine=phase!=='escape'?(language==='es'?'El señor Hollow observa desde el mostrador de servicio.':'Mr. Hollow is watching from the service desk.')
+    :isInCameraRoom(player)?(language==='es'?'La sala de cámaras no revela la ubicación del señor Hollow. La alarma de movimiento te avisará si se acerca.':'The camera room does not reveal Mr. Hollow’s location. Its motion alarm will warn you if he approaches.')
+    :enemyDistance<=5?(language==='es'?`Peligro. El señor Hollow está hacia el ${localizedDirection(enemyDirection)}, a ${enemyDistance} pasos.`:`Danger. Mr. Hollow is ${enemyDirection}, ${enemyDistance} steps.`)
+    :(language==='es'?'El señor Hollow está en algún lugar de la tienda. Escúchalo.':'Mr. Hollow is somewhere in the store. Listen for him.');
+  const compassMessage=language==='es'
+    ?`${translateText(goalName)}: hacia el ${localizedDirection(directionWords(goal.x-player.x,goal.y-player.y))}, a ${manhattan(player,goal)} pasos. ${dangerLine}`
+    :`${goalName}: ${directionWords(goal.x-player.x,goal.y-player.y)}, ${manhattan(player,goal)} steps. ${dangerLine}`;
+  announce(compassMessage, true);
   spatialCue(goal.x-player.x, 520);
   if(phase==='escape'&&!isInCameraRoom(player)&&enemyDistance<=5)setTimeout(()=>spatialCue(boss.x-player.x,110),280);
 }
@@ -1250,9 +1272,10 @@ function checkCaught(){
   huntMemory=0;
   bossSearching=false;
   const chancesLeft=6-catches;
-  const stolenMessage=stolenMemories?` He stole ${stolenMemories} memory fragment${stolenMemories===1?'':'s'} before leaving another piece behind.`:'';
-  const memoryMessage=memorySideTaskActive?' Lost pieces of your memory remain where he caught you. You must recover every fragment by finding it and pressing E before you can escape.':' Something from the encounter is already becoming difficult to remember.';
-  announce(`Mr. Hollow grabbed you, but you broke free. ${chancesLeft} chance${chancesLeft===1?'':'s'} left. He is getting faster.${stolenMessage}${memoryMessage}`,true);
+  const caughtMessage=language==='es'
+    ?`El señor Hollow te atrapó, pero lograste liberarte. Te ${chancesLeft===1?'queda':'quedan'} ${chancesLeft} ${chancesLeft===1?'oportunidad':'oportunidades'}. Cada vez es más rápido.${stolenMemories?` Robó ${stolenMemories} ${stolenMemories===1?'fragmento':'fragmentos'} de memoria antes de dejar otro fragmento atrás.`:''}${memorySideTaskActive?' Los fragmentos perdidos de tu memoria permanecen donde te atrapó. Debes encontrar cada fragmento y usar E para recuperarlo antes de poder escapar.':' Ya empiezas a olvidar algo de ese encuentro.'}`
+    :`Mr. Hollow grabbed you, but you broke free. ${chancesLeft} chance${chancesLeft===1?'':'s'} left. He is getting faster.${stolenMemories?` He stole ${stolenMemories} memory fragment${stolenMemories===1?'':'s'} before leaving another piece behind.`:''}${memorySideTaskActive?' Lost pieces of your memory remain where he caught you. You must recover every fragment by finding it and pressing E before you can escape.':' Something from the encounter is already becoming difficult to remember.'}`;
+  announce(caughtMessage,true);
   updateHud();draw();
 }
 function startMemoryBattle(){
@@ -1267,7 +1290,7 @@ function startMemoryBattle(){
   document.querySelector('#battleText').textContent=language==='es'?`El señor Hollow tiene ${stolenMemories} fragmentos de memoria robados. Te arrastra hacia el almacén cerrado. Lucha antes de que termine de cerrar la última cerradura.`:`Mr. Hollow has ${stolenMemories} stolen memory fragment${stolenMemories===1?'':'s'}. He is dragging you toward the locked stockroom. Fight before the final lock turns.`;
   [42,31,52,27,39,24].forEach((frequency,index)=>setTimeout(()=>{tone(frequency,.5,index%2?-.7:.7);noiseBurst(.35,.12,index%2?-.8:.8);},index*420));
   if(navigator.vibrate)navigator.vibrate([220,80,220,80,400]);
-  announce(`Memory confrontation. Mr. Hollow has ${stolenMemories} stolen memories. Press E or activate Fight Back six times before he locks you in.`,true);
+  announce(language==='es'?`Enfrentamiento de memoria. El señor Hollow tiene ${stolenMemories} recuerdos robados. Usa E o activa Luchar seis veces antes de que te encierre.`:`Memory confrontation. Mr. Hollow has ${stolenMemories} stolen memories. Press E or activate Fight Back six times before he locks you in.`,true);
   battleTimer=setTimeout(()=>finishMemoryBattle(false),9000);
   document.querySelector('#fightButton').focus();
 }
@@ -1300,7 +1323,7 @@ function finishMemoryBattle(wonBattle){
   boss={...bossStart};
   energy=Math.max(25,energy);
   triggerJumpScare('YOU TORE FREE.',true);
-  announce(`You broke his grip. He dropped ${returned} stolen memory fragment${returned===1?'':'s'}. ${returned} chance${returned===1?' was':'s were'} restored. Run.`,true);
+  announce(language==='es'?`Rompiste su agarre. Soltó ${returned} ${returned===1?'fragmento de memoria robado':'fragmentos de memoria robados'}. ${returned===1?'Recuperaste una oportunidad':'Recuperaste '+returned+' oportunidades'}. Corre.`:`You broke his grip. He dropped ${returned} stolen memory fragment${returned===1?'':'s'}. ${returned} chance${returned===1?' was':'s were'} restored. Run.`,true);
   updateHud();draw();
 }
 function endGame(success){
@@ -1365,9 +1388,9 @@ function draw() {
     ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
     const face=facingVectors[facing];
     ctx.beginPath();ctx.moveTo(player.x*TILE+20,player.y*TILE+20);ctx.lineTo(player.x*TILE+20+face.x*18,player.y*TILE+20+face.y*18);ctx.strokeStyle='#07100d';ctx.lineWidth=4;ctx.stroke();
-    if(crouching){ctx.fillStyle='#b7c2be';ctx.font='8px IBM Plex Mono';ctx.fillText('CROUCHED',player.x*TILE-2,player.y*TILE+34);}
+    if(crouching){ctx.fillStyle='#b7c2be';ctx.font='8px IBM Plex Mono';ctx.fillText(language==='es'?'AGACHADO':'CROUCHED',player.x*TILE-2,player.y*TILE+34);}
   } else {
-    ctx.fillStyle='#c7ff4a';ctx.font='bold 11px IBM Plex Mono';ctx.fillText('HIDDEN',player.x*TILE-4,player.y*TILE+5);
+    ctx.fillStyle='#c7ff4a';ctx.font='bold 11px IBM Plex Mono';ctx.fillText(language==='es'?'OCULTO':'HIDDEN',player.x*TILE-4,player.y*TILE+5);
   }
   if(!powerOn&&!isInCameraRoom(player)){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,canvas.width,canvas.height);}
   if(phase==='escape'&&!isInCameraRoom(player)){
@@ -1464,7 +1487,7 @@ function drawSecurityDoor(door){
     ctx.fillStyle='#263532';
     if(door.orientation==='vertical')ctx.fillRect(px+4,py+5,7,TILE-10);
     else ctx.fillRect(px+5,py+4,TILE-10,7);
-    ctx.fillStyle='#c7ff4a';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('OPEN',px+9,py+23);
+    ctx.fillStyle='#c7ff4a';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'ABIERTA':'OPEN',px+5,py+23);
   }else{
     const gradient=ctx.createLinearGradient(px,py,px+TILE,py+TILE);
     gradient.addColorStop(0,'#79512f');gradient.addColorStop(1,'#33251d');
@@ -1473,9 +1496,9 @@ function drawSecurityDoor(door){
     ctx.fillStyle='#e2b85f';ctx.beginPath();ctx.arc(px+27,py+21,3,0,Math.PI*2);ctx.fill();
     if(door.keyInserted){
       ctx.strokeStyle='#fff0a8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px+27,py+21);ctx.lineTo(px+34,py+17);ctx.stroke();
-      ctx.fillStyle='#c7ff4a';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('PUSH',px+8,py+37);
+      ctx.fillStyle='#c7ff4a';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'EMPUJA':'PUSH',px+5,py+37);
     }else{
-      ctx.fillStyle='#ffd978';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('LOCK',px+8,py+37);
+      ctx.fillStyle='#ffd978';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'CERRADA':'LOCK',px+4,py+37);
     }
   }
   ctx.restore();
@@ -1485,7 +1508,7 @@ function drawShelfKey(key){
   ctx.save();ctx.shadowColor='#ffd978';ctx.shadowBlur=9;ctx.strokeStyle='#ffd978';ctx.lineWidth=3;
   ctx.beginPath();ctx.arc(cx-5,cy,5,0,Math.PI*2);ctx.stroke();
   ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+11,cy);ctx.lineTo(cx+11,cy+5);ctx.moveTo(cx+6,cy);ctx.lineTo(cx+6,cy+4);ctx.stroke();
-  ctx.shadowBlur=0;ctx.fillStyle='#fff0a8';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('KEY',cx-9,cy+15);ctx.restore();
+  ctx.shadowBlur=0;ctx.fillStyle='#fff0a8';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'LLAVE':'KEY',cx-11,cy+15);ctx.restore();
 }
 function drawCheckoutCounter(){
   const px=checkoutSpot.x*TILE,py=checkoutSpot.y*TILE;
@@ -1493,13 +1516,13 @@ function drawCheckoutCounter(){
   ctx.fillStyle='#d2b171';ctx.fillRect(px-18,py+10,98,5);
   ctx.fillStyle='#182121';ctx.fillRect(px+44,py-2,22,17);ctx.fillStyle='#7fd9e8';ctx.fillRect(px+48,py+1,14,8);
   ctx.fillStyle='#d9d1be';ctx.fillRect(px+7,py+17,25,9);
-  ctx.fillStyle='#e7eee9';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('REGISTER',px-13,py+48);
+  ctx.fillStyle='#e7eee9';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'CAJA':'REGISTER',px-13,py+48);
 }
 function drawMopCloset(){
   const px=mopSpot.x*TILE,py=mopSpot.y*TILE;
   ctx.fillStyle='#334842';ctx.fillRect(px+4,py+3,31,34);ctx.fillStyle='#a1b5a6';ctx.fillRect(px+17,py+6,3,27);
   ctx.strokeStyle='#d6c15f';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px+12,py+31);ctx.lineTo(px+24,py+8);ctx.stroke();
-  if(!hasMop){ctx.fillStyle='#d8e6dd';ctx.font='bold 7px IBM Plex Mono';ctx.fillText('MOP',px+1,py+48);}
+  if(!hasMop){ctx.fillStyle='#d8e6dd';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'TRAP.':'MOP',px+1,py+48);}
 }
 function drawSpill(point){
   const px=point.x*TILE+20,py=point.y*TILE+22;
@@ -1576,10 +1599,18 @@ function drawMarker(point,color,label){
   const cx=point.x*TILE+20,cy=point.y*TILE+20;
   ctx.fillStyle='rgba(4,8,8,.82)';ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
-  ctx.fillStyle='#d6dfdb';ctx.font='bold 7px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(label,cx,cy+3);ctx.textAlign='start';
+  ctx.fillStyle='#d6dfdb';ctx.font='bold 7px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(canvasLabel(label),cx,cy+3);ctx.textAlign='start';
 }
 function areaName(p){if(isInCameraRoom(p))return 'Camera room';if(p.y<=3)return p.x>=23?'Manager office hall':'Front checkout';if(p.y>=15)return p.x<=9?'Stockroom':p.x>=23?'Loading bay':'Back aisle';return `Aisle ${Math.max(1,Math.floor(p.x/2))}`;}
 function directionWords(dx,dy){const vertical=dy<0?'north':dy>0?'south':'';const horizontal=dx<0?'west':dx>0?'east':'';return vertical&&horizontal?`${vertical}-${horizontal}`:vertical||horizontal||'here';}
+function localizedDirection(direction){
+  if(language!=='es')return direction;
+  return {'north':'norte','north-east':'noreste','east':'este','south-east':'sureste','south':'sur','south-west':'suroeste','west':'oeste','north-west':'noroeste','here':'lugar actual'}[direction]||direction;
+}
+function canvasLabel(label){
+  if(language!=='es')return label;
+  return {FOOD:'COMIDA',BOT:'BOT.',SOAP:'JABÓN',CAN:'LATA',CELL:'CELDA',CAM:'CÁM.',FLASH:'FLASH',WOOD:'MANGO',TAPE:'CINTA',RAG:'TRAPO',COFFEE:'CAFÉ',MEM:'MEM.',EXIT:'SALIDA',JAM:'BLOQ.'}[label]||label;
+}
 function manhattan(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
 function closedDoorAt(x,y){return phase==='escape'?securityDoors.find(door=>!door.open&&door.x===x&&door.y===y):null;}
 function tileBlocked(x,y){return walls.has(`${x},${y}`)||Boolean(closedDoorAt(x,y));}
@@ -1744,7 +1775,7 @@ function eatCarriedFood(){
 }
 function useMap(){
   if(!hasMap){announce('The guidance map is missing.',false);return;}
-  const goal=currentGoal();showMapUntil=performance.now()+12000;announce(`Required map guidance: face ${directionWords(goal.x-player.x,goal.y-player.y)}. Your next objective is ${manhattan(player,goal)} steps away. Listen again whenever you become lost.`,true);tone(620,.12,goal.x-player.x);draw();
+  const goal=currentGoal(),direction=directionWords(goal.x-player.x,goal.y-player.y),distance=manhattan(player,goal);showMapUntil=performance.now()+12000;announce(language==='es'?`Guía del mapa obligatorio: mira hacia el ${localizedDirection(direction)}. Tu próximo objetivo está a ${distance} pasos. Vuelve a escuchar cuando te pierdas.`:`Required map guidance: face ${direction}. Your next objective is ${distance} steps away. Listen again whenever you become lost.`,true);tone(620,.12,goal.x-player.x);draw();
 }
 function useLure(){
   if(!hasLure){announce('Craft a noise lure from an empty can and batteries.',false);return;}

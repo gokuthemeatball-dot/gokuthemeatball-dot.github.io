@@ -1,4 +1,4 @@
-const CACHE_NAME='aisle13-app-v113';
+const CACHE_NAME='aisle13-app-v114';
 const APP_SHELL=[
   './',
   './index.html',
