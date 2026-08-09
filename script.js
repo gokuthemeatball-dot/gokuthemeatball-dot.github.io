@@ -97,7 +97,7 @@ const handleSpot = {x:10,y:17};
 const tapeSpot = {x:29,y:6};
 const ragSpot = {x:18,y:14};
 const coffeeSpot = {x:7,y:9};
-const clueSpots = [{x:2,y:15},{x:15,y:2},{x:22,y:16},{x:29,y:11}];
+const clueSpots = [{x:2,y:15},{x:16,y:2},{x:22,y:16},{x:29,y:11}];
 const clueTexts = [
   'A timecard dated 1987. Every employee clocked out except one. The missing name is scratched away.',
   'A staff photograph shows Mr. Hollow in the same green vest. The photograph is dated forty years ago.',
@@ -110,6 +110,12 @@ const hollowHidingPoints = [
   {x:29,y:2},{x:27,y:6},{x:29,y:14},{x:24,y:17},{x:18,y:17},{x:11,y:17},
   {x:3,y:15},{x:3,y:9},{x:5,y:6},{x:10,y:2},{x:16,y:2},{x:22,y:2},
   {x:15,y:7},{x:23,y:12},{x:9,y:13}
+];
+const cameraRoomEntrance = {x:13,y:3};
+const cameraTransportButton = {x:13,y:1};
+const cameraRoomFloor = new Set(['12,1','13,1','14,1','12,2','13,2','14,2','13,3']);
+const cameraTransportDestinations = [
+  {x:2,y:12},{x:11,y:12},{x:22,y:12},{x:29,y:16},{x:22,y:7},{x:3,y:7}
 ];
 const doorBlueprints = [
   {x:11,y:8,orientation:'vertical'},
@@ -130,6 +136,9 @@ const walls = new Set();
 const shelfTiles = new Set();
 for (let x = 0; x < COLS; x++) { walls.add(`${x},0`); walls.add(`${x},${ROWS - 1}`); }
 for (let y = 0; y < ROWS; y++) { walls.add(`0,${y}`); walls.add(`${COLS - 1},${y}`); }
+// A sealed surveillance room. Its only opening is the south entrance at 13,3.
+for(let y=1;y<=3;y++){walls.add(`11,${y}`);walls.add(`15,${y}`);}
+walls.add('12,3');walls.add('14,3');
 [
   [4,4,6,2],[4,9,6,2],[4,14,6,2],
   [13,4,8,2],[13,9,8,2],[13,14,8,2],
@@ -231,6 +240,9 @@ let battleHits;
 let battleTimer;
 let battleLost;
 let nextExhaustedMoveAt;
+let trailLostUntil;
+let cameraAlertActive;
+let lastCameraAlertAt;
 let audioContext;
 let ambientGain;
 let lastAnnouncement = '';
@@ -312,6 +324,12 @@ const spanishExact = {
   'Office keycard collected. Mr. Hollow enters his enraged phase. Reach the loading exit southeast.':'Tarjeta recogida. El señor Hollow entra en su fase furiosa. Llega a la salida de carga al sureste.',
   'Nothing to use here.':'No hay nada que usar aquí.',
   'The store falls silent. Mr. Hollow’s location is unknown.':'La tienda queda en silencio. No se conoce la ubicación del señor Hollow.',
+  'Camera room. The surveillance screens reveal store fixtures and items, but never Mr. Hollow’s location. He cannot enter this room. The transport button is at the north wall.':'Sala de cámaras. Las pantallas de vigilancia muestran los objetos y lugares de la tienda, pero nunca la ubicación del señor Hollow. No puede entrar en esta sala. El botón de transporte está en la pared norte.',
+  'Camera warning. Movement detected outside the secure room. Mr. Hollow cannot enter.':'Alerta de cámara. Movimiento detectado fuera de la sala segura. El señor Hollow no puede entrar.',
+  'Camera clear. No movement is detected near the secure room.':'Cámara despejada. No se detecta movimiento cerca de la sala segura.',
+  'The camera room does not reveal Mr. Hollow’s location. Its motion alarm will warn you if he approaches.':'La sala de cámaras no revela la ubicación del señor Hollow. La alarma de movimiento te avisará si se acerca.',
+  'Transport button ready. Press Interact to move to another part of the store and erase your trail for one minute.':'Botón de transporte listo. Usa Interactuar para ir a otra parte de la tienda y borrar tu rastro durante un minuto.',
+  'The camera flashes white. You arrive somewhere else in the store. Mr. Hollow loses your trail for one minute.':'La cámara emite un destello blanco. Apareces en otra parte de la tienda. El señor Hollow pierde tu rastro durante un minuto.',
   'The flashlight hits Mr. Hollow. He shields his eyes and loses your trail for fifteen seconds.':'La linterna alcanza al señor Hollow. Se cubre los ojos y pierde tu rastro durante quince segundos.',
   'Mr. Hollow is somewhere in the store. Listen for him.':'El señor Hollow está en algún lugar de la tienda. Escúchalo.',
   'Caught by Mr. Hollow. Shift ended.':'El señor Hollow te atrapó. El turno terminó.',
@@ -416,7 +434,7 @@ function translateText(message){
     .replace(/^Nothing to use here\. /,'No hay nada que usar aquí. ')
     .replace(/\bFront checkout\b/g,'Caja principal').replace(/\bStockroom\b/g,'Almacén').replace(/\bLoading bay\b/g,'Zona de carga').replace(/\bBack aisle\b/g,'Pasillo trasero').replace(/\bManager office hall\b/g,'Pasillo de la oficina del gerente')
     .replace(/\bCheckout\b/g,'Caja').replace(/\bNext spill\b/g,'Siguiente derrame').replace(/\bSpill\b/g,'Derrame').replace(/\bFuse\b/g,'Fusible').replace(/\bBreaker\b/g,'Interruptor').replace(/\bKeycard\b/g,'Tarjeta').replace(/\bExit\b/g,'Salida')
-    .replace(/\bHiding place\b/g,'Escondite').replace(/\bFood\b/g,'Comida').replace(/\bEmpty bottle\b/g,'Botella vacía').replace(/\bCleaner\b/g,'Limpiador').replace(/\bEmpty can\b/g,'Lata vacía').replace(/\bBatteries\b/g,'Baterías').replace(/\bCamera\b/g,'Cámara').replace(/\bFlash cell\b/g,'Celda de flash').replace(/\bHandle\b/g,'Mango').replace(/\bDuct tape\b/g,'Cinta adhesiva').replace(/\bRag\b/g,'Trapo').replace(/\bCoffee\b/g,'Café').replace(/\bMystery fragment\b/g,'Fragmento del misterio').replace(/\bLost memory\b/g,'Recuerdo perdido').replace(/\bBrass key\b/g,'Llave de latón').replace(/\bLocked security door\b/g,'Puerta de seguridad cerrada')
+    .replace(/\bHiding place\b/g,'Escondite').replace(/\bFood\b/g,'Comida').replace(/\bEmpty bottle\b/g,'Botella vacía').replace(/\bCleaner\b/g,'Limpiador').replace(/\bEmpty can\b/g,'Lata vacía').replace(/\bBatteries\b/g,'Baterías').replace(/\bCamera room\b/g,'Sala de cámaras').replace(/\bCamera\b/g,'Cámara').replace(/\bFlash cell\b/g,'Celda de flash').replace(/\bHandle\b/g,'Mango').replace(/\bDuct tape\b/g,'Cinta adhesiva').replace(/\bRag\b/g,'Trapo').replace(/\bCoffee\b/g,'Café').replace(/\bMystery fragment\b/g,'Fragmento del misterio').replace(/\bLost memory\b/g,'Recuerdo perdido').replace(/\bBrass key\b/g,'Llave de latón').replace(/\bLocked security door\b/g,'Puerta de seguridad cerrada')
     .replace(/\bis\b/g,'está').replace(/\bhere\b/g,'aquí').replace(/\bAisle (\d+)\b/g,'Pasillo $1')
     .replace(/^Selected item: /,'Objeto seleccionado: ')
     .replace(/^Using selected item: /,'Usando objeto: ')
@@ -599,6 +617,9 @@ function resetGame() {
   battleHits = 0;
   battleLost = false;
   nextExhaustedMoveAt = 0;
+  trailLostUntil = 0;
+  cameraAlertActive = false;
+  lastCameraAlertAt = 0;
   if(battleTimer){clearTimeout(battleTimer);battleTimer=null;}
   document.querySelector('#battleModal').hidden=true;
   closeByWasNear = false;
@@ -737,6 +758,15 @@ function updateHud() {
   maskItem.textContent=`${language==='es'?'MÁSCARA DE OLOR':'SCENT MASK'} ${hasScentMask?'●':'○'}`;
   maskItem.classList.toggle('found',hasScentMask);
   if(phase!=='escape'){dangerStatus.textContent=language==='es'?(phase==='customers'?'TIENDA: ABIERTA':'TURNO: NORMAL'):(phase==='customers'?'STORE: OPEN':'SHIFT: NORMAL');dangerStatus.style.color='#c7ff4a';return;}
+  if(isInCameraRoom(player)){
+    dangerStatus.textContent=language==='es'?(cameraAlertActive?'CÁMARA: MOVIMIENTO':'CÁMARA: SEGURA'):(cameraAlertActive?'CAMERA: MOTION ALERT':'CAMERA: SECURE');
+    dangerStatus.style.color=cameraAlertActive?'#ffc44a':'#54cfff';return;
+  }
+  if(performance.now()<trailLostUntil){
+    const seconds=Math.max(1,Math.ceil((trailLostUntil-performance.now())/1000));
+    dangerStatus.textContent=language==='es'?`RASTRO BORRADO: ${seconds} S`:`TRAIL ERASED: ${seconds} S`;
+    dangerStatus.style.color='#54cfff';return;
+  }
   const bossPhase=language==='es'?(hasKey?'FURIOSO':powerOn?'CAZANDO':'ACECHANDO'):(hasKey?'ENRAGED':powerOn?'HUNTING':'STALKING');
   dangerStatus.textContent = `${bossPhase}: ${language==='es'?'UBICACIÓN DESCONOCIDA':'LOCATION UNKNOWN'}`;
   dangerStatus.style.color = '#ff414d';
@@ -803,6 +833,10 @@ function jumpForward(){
 }
 
 function describeTile() {
+  if(isInCameraRoom(player)){
+    announce(manhattan(player,cameraTransportButton)<=1?'Transport button ready. Press Interact to move to another part of the store and erase your trail for one minute.':'Camera room. The surveillance screens reveal store fixtures and items, but never Mr. Hollow’s location. He cannot enter this room. The transport button is at the north wall.',true);
+    return;
+  }
   const nearby = nearestImportant();
   const place = areaName(player);
   if (blindMode || nearby.distance <= 1) {
@@ -850,6 +884,10 @@ function interact(allowDoorAction=true) {
       return;
     }
     announce(hasMop?`Find the next marked spill. ${cleaningSpots.length-cleanedSpots.size} remain.`:'The mop is in the supply closet beside the front checkout.',true);
+    return;
+  }
+  if(phase==='escape'&&manhattan(player,cameraTransportButton)<=1){
+    useCameraTransport();
     return;
   }
   const shelfKey=phase==='escape'?shelfKeys.find(key=>!key.collected&&manhattan(player,key)<=1):null;
@@ -979,6 +1017,7 @@ function nearestImportant() {
   else if (!hasKey) targets.push({...keycard,label:'Keycard'});
   else targets.push({...exit,label:'Exit'});
   if(phase==='escape')hideSpots.forEach(h => targets.push({...h,label:'Hiding place'}));
+  if(phase==='escape')targets.push({...cameraRoomEntrance,label:'Camera room'});
   if(phase==='escape'&&energy<55)foodSpots.forEach((spot,index)=>{if(!eatenFood.has(index))targets.push({...spot,label:'Food'});});
   if(phase==='escape'&&!hasBottle)targets.push({...bottleSpot,label:'Empty bottle'});
   if(phase==='escape'&&!hasCleaner)targets.push({...cleanerSpot,label:'Cleaner'});
@@ -1007,10 +1046,45 @@ function audioCompass() {
   const goalName = phase==='customers' ? 'Checkout' : phase==='cleaning' ? (hasMop?'Next spill':'Mop closet') : !hasFuse ? 'Fuse' : !powerOn ? 'Breaker' : !hasKey ? 'Keycard' : 'Exit';
   const enemyDistance=manhattan(player,boss);
   const enemyDirection = directionWords(boss.x-player.x,boss.y-player.y);
-  const dangerLine=phase!=='escape'?'Mr. Hollow is watching from the service desk.':enemyDistance<=5?`Danger. Mr. Hollow is ${enemyDirection}, ${enemyDistance} steps.`:'Mr. Hollow is somewhere in the store. Listen for him.';
+  const dangerLine=phase!=='escape'?'Mr. Hollow is watching from the service desk.':isInCameraRoom(player)?'The camera room does not reveal Mr. Hollow’s location. Its motion alarm will warn you if he approaches.':enemyDistance<=5?`Danger. Mr. Hollow is ${enemyDirection}, ${enemyDistance} steps.`:'Mr. Hollow is somewhere in the store. Listen for him.';
   announce(`${goalName}: ${directionWords(goal.x-player.x,goal.y-player.y)}, ${manhattan(player,goal)} steps. ${dangerLine}`, true);
   spatialCue(goal.x-player.x, 520);
-  if(phase==='escape'&&enemyDistance<=5)setTimeout(()=>spatialCue(boss.x-player.x,110),280);
+  if(phase==='escape'&&!isInCameraRoom(player)&&enemyDistance<=5)setTimeout(()=>spatialCue(boss.x-player.x,110),280);
+}
+
+function isInCameraRoom(point){return cameraRoomFloor.has(`${point.x},${point.y}`);}
+
+function useCameraTransport(){
+  if(!running||paused||phase!=='escape')return;
+  const options=cameraTransportDestinations.filter(point=>!tileBlocked(point.x,point.y)&&manhattan(point,boss)>=7);
+  const destinations=options.length?options:cameraTransportDestinations.filter(point=>!tileBlocked(point.x,point.y));
+  player={...(destinations[Math.floor(Math.random()*destinations.length)]||playerStart)};
+  trailLostUntil=performance.now()+60000;
+  lastKnownPlayer={...playerStart};
+  huntMemory=0;bossSearching=false;noiseTurns=0;lureTarget=null;lureTurns=0;
+  cameraAlertActive=false;
+  tone(1420,.08,-.5);setTimeout(()=>tone(1860,.08,.5),80);setTimeout(()=>noiseBurst(.3,.06,0),160);
+  announce('The camera flashes white. You arrive somewhere else in the store. Mr. Hollow loses your trail for one minute.',true);
+  updateHud();draw();
+}
+
+function updateCameraRoomAlert(time){
+  if(phase!=='escape'||!isInCameraRoom(player)){
+    if(cameraAlertActive){cameraAlertActive=false;updateHud();}
+    return;
+  }
+  const approaching=manhattan(boss,cameraRoomEntrance)<=5;
+  if(approaching&&!cameraAlertActive){
+    cameraAlertActive=true;lastCameraAlertAt=time;
+    [920,620,920].forEach((frequency,index)=>setTimeout(()=>tone(frequency,.09,index%2?-.45:.45),index*135));
+    if(navigator.vibrate)navigator.vibrate([80,55,80]);
+    announce('Camera warning. Movement detected outside the secure room. Mr. Hollow cannot enter.',true);
+    updateHud();
+  }else if(!approaching&&cameraAlertActive&&time-lastCameraAlertAt>1200){
+    cameraAlertActive=false;
+    announce('Camera clear. No movement is detected near the secure room.',true);
+    updateHud();
+  }
 }
 
 function bossStep(time) {
@@ -1018,13 +1092,14 @@ function bossStep(time) {
   if (!running || paused || phase!=='escape' || time-lastBossMove < bossDelay) return;
   lastBossMove = time;
   if(time<bossStunnedUntil){dangerStatus.textContent=language==='es'?'GERENTE: ATURDIDO':'BOSS: STUNNED';dangerStatus.style.color='#54cfff';return;}
+  const trailIsLost=time<trailLostUntil;
   const baseSight=flashlight ? (hasKey?9:6) : (hasKey?5:3);
   const scentMasked = time < scentMaskUntil;
-  const seesPlayer = !hidden&&manhattan(player,boss) <= Math.max(scentMasked?1:2,baseSight-(crouching?3:0)-(scentMasked?4:0));
+  const seesPlayer = !trailIsLost&&!isInCameraRoom(player)&&!hidden&&manhattan(player,boss) <= Math.max(scentMasked?1:2,baseSight-(crouching?3:0)-(scentMasked?4:0));
   const distanceBeforeMove=manhattan(player,boss);
   if(distanceBeforeMove>7&&Math.random()<.16)return;
-  if(time>=nextAmbushAt&&distanceBeforeMove>8){
-    const ambushPoints=hollowHidingPoints.filter(point=>{const distance=manhattan(player,point);return distance>=9&&distance<=18&&!tileBlocked(point.x,point.y);});
+  if(!trailIsLost&&time>=nextAmbushAt&&distanceBeforeMove>8){
+    const ambushPoints=hollowHidingPoints.filter(point=>{const distance=manhattan(player,point);return distance>=9&&distance<=18&&!bossTileBlocked(point.x,point.y);});
     if(ambushPoints.length){
       boss={...ambushPoints[Math.floor(Math.random()*ambushPoints.length)]};
       lastAmbush=time;
@@ -1034,7 +1109,11 @@ function bossStep(time) {
     nextAmbushAt=time+14000+Math.random()*12000;
   }
   let target;
-  if(lureTurns>0&&lureTarget){
+  if(trailIsLost){
+    huntMemory=0;bossSearching=false;noiseTurns=0;
+    target=patrolPoints[patrolIndex];
+    if(manhattan(boss,target)<=1)patrolIndex=(patrolIndex+1)%patrolPoints.length;
+  } else if(lureTurns>0&&lureTarget){
     target=lureTarget;lureTurns--;bossSearching=false;
   } else if(hidden&&(bossSearching||Math.random()<(hasKey ? .3 : .18))) {
     target=player;
@@ -1069,8 +1148,8 @@ function bossStep(time) {
     announce('Mr. Hollow hits the door jammer. The aisle shakes, but the pursuit stops for seven seconds.',true);
   }
   const distance = manhattan(player,boss);
-  bossFootstepSound(distance,boss.x-player.x);
-  if (distance <= 6) {
+  if(!isInCameraRoom(player))bossFootstepSound(distance,boss.x-player.x);
+  if (!isInCameraRoom(player)&&distance <= 6) {
     spatialCue(boss.x-player.x, distance <= 2 ? 75 : 105);
     if(distance<=4)heartbeatSound(distance);
     if (Math.random() < .18) keyRattle(boss.x-player.x);
@@ -1089,7 +1168,7 @@ function findPath(start,target) {
     if(current.x===target.x&&current.y===target.y) break;
     [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
       const next={x:current.x+dx,y:current.y+dy},key=`${next.x},${next.y}`;
-      if(!tileBlocked(next.x,next.y)&&!came.has(key)){came.set(key,current);queue.push(next);}
+      if(!bossTileBlocked(next.x,next.y)&&!came.has(key)){came.set(key,current);queue.push(next);}
     });
   }
   const endKey=`${target.x},${target.y}`;
@@ -1100,6 +1179,7 @@ function findPath(start,target) {
 }
 
 function checkCaught(){
+  if(isInCameraRoom(player))return;
   if(player.x!==boss.x||player.y!==boss.y)return;
   if(hidden&&!bossSearching)return;
   if(hidden&&bossSearching){
@@ -1212,6 +1292,7 @@ function draw() {
     if(!wall){ctx.strokeStyle='rgba(105,120,116,.06)';ctx.strokeRect(x*TILE,y*TILE,TILE,TILE);}
     if(wall){ctx.strokeStyle='#3c4947';ctx.strokeRect(x*TILE+2,y*TILE+2,TILE-4,TILE-4);}
   }
+  drawCameraRoom();
   drawStoreFixtures();
   securityDoors.forEach(door=>drawSecurityDoor(phase==='escape'?door:{...door,open:true}));
   if(phase==='escape')shelfKeys.forEach(key=>{if(!key.collected)drawShelfKey(key);});
@@ -1246,7 +1327,7 @@ function draw() {
   } else {
     ctx.fillStyle='#c7ff4a';ctx.font='bold 11px IBM Plex Mono';ctx.fillText('HIDDEN',player.x*TILE-4,player.y*TILE+5);
   }
-  if(!powerOn){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,canvas.width,canvas.height);}
+  if(!powerOn&&!isInCameraRoom(player)){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,canvas.width,canvas.height);}
   if(flashlight&&!hidden&&!powerOn){
     const gradient=ctx.createRadialGradient(player.x*TILE+20,player.y*TILE+20,10,player.x*TILE+20,player.y*TILE+20,150);
     gradient.addColorStop(0,'rgba(220,255,180,.38)');gradient.addColorStop(1,'rgba(0,0,0,0)');
@@ -1257,6 +1338,28 @@ function draw() {
   }
   if(jammerSpot)drawMarker(jammerSpot,'#ff9f43','JAM');
   if(performance.now()<flickerUntil){ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(0,0,canvas.width,canvas.height);}
+}
+
+function drawCameraRoom(){
+  ctx.save();
+  cameraRoomFloor.forEach(key=>{
+    const [x,y]=key.split(',').map(Number);
+    ctx.fillStyle=isInCameraRoom(player)?'#17343a':'#102429';
+    ctx.fillRect(x*TILE+2,y*TILE+2,TILE-4,TILE-4);
+    ctx.strokeStyle='#4aa9b8';ctx.lineWidth=1;ctx.strokeRect(x*TILE+4,y*TILE+4,TILE-8,TILE-8);
+  });
+  for(let x=12;x<=14;x++){
+    const px=x*TILE+5,py=TILE+5;
+    ctx.fillStyle=cameraAlertActive?'#6b2027':'#143b42';ctx.fillRect(px,py,30,18);
+    ctx.strokeStyle=cameraAlertActive?'#ff6b74':'#70d9e8';ctx.strokeRect(px,py,30,18);
+    ctx.fillStyle=cameraAlertActive?'#ff9aa1':'#8be7ff';ctx.fillRect(px+5,py+5,20,2);ctx.fillRect(px+5,py+10,12,2);
+  }
+  const buttonX=cameraTransportButton.x*TILE+20,buttonY=cameraTransportButton.y*TILE+29;
+  ctx.fillStyle='#080c0d';ctx.beginPath();ctx.arc(buttonX,buttonY,8,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#c7ff4a';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#dce8e4';ctx.font='bold 7px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(language==='es'?'TRANSP.':'TRANSPORT',buttonX,buttonY+17);
+  ctx.fillStyle='#8be7ff';ctx.font='bold 7px IBM Plex Mono';ctx.fillText(language==='es'?'SALA DE CÁMARAS':'CAMERA ROOM',13*TILE+20,3*TILE+34);
+  ctx.textAlign='start';ctx.restore();
 }
 
 function drawStoreFixtures(){
@@ -1404,11 +1507,12 @@ function drawMarker(point,color,label){
   ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
   ctx.fillStyle='#d6dfdb';ctx.font='bold 7px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(label,cx,cy+3);ctx.textAlign='start';
 }
-function areaName(p){if(p.y<=3)return p.x>=23?'Manager office hall':'Front checkout';if(p.y>=15)return p.x<=9?'Stockroom':p.x>=23?'Loading bay':'Back aisle';return `Aisle ${Math.max(1,Math.floor(p.x/2))}`;}
+function areaName(p){if(isInCameraRoom(p))return 'Camera room';if(p.y<=3)return p.x>=23?'Manager office hall':'Front checkout';if(p.y>=15)return p.x<=9?'Stockroom':p.x>=23?'Loading bay':'Back aisle';return `Aisle ${Math.max(1,Math.floor(p.x/2))}`;}
 function directionWords(dx,dy){const vertical=dy<0?'north':dy>0?'south':'';const horizontal=dx<0?'west':dx>0?'east':'';return vertical&&horizontal?`${vertical}-${horizontal}`:vertical||horizontal||'here';}
 function manhattan(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
 function closedDoorAt(x,y){return phase==='escape'?securityDoors.find(door=>!door.open&&door.x===x&&door.y===y):null;}
 function tileBlocked(x,y){return walls.has(`${x},${y}`)||Boolean(closedDoorAt(x,y));}
+function bossTileBlocked(x,y){return tileBlocked(x,y)||cameraRoomFloor.has(`${x},${y}`);}
 function useSecurityDoor(door,action){
   if(!door)return false;
   if(door.open&&(action==='close'||action==='gesture-toggle')){
@@ -1503,7 +1607,7 @@ function brassKeyPickupSound(){
 }
 function flashlightSound(){noiseBurst(.025,.06,0);tone(flashlight?1250:480,.035,0);setTimeout(()=>tone(flashlight?760:260,.045,0),38);}
 function flashlightHitsBoss(maxRange=8){
-  if(!flashlight||hidden||phase!=='escape')return false;
+  if(!flashlight||hidden||phase!=='escape'||isInCameraRoom(player))return false;
   const beam=facingVectors[facing];
   const dx=boss.x-player.x,dy=boss.y-player.y;
   const beamLength=Math.hypot(beam.x,beam.y);
@@ -2258,7 +2362,7 @@ function triggerJumpScare(text='RUN.',force=false){
 }
 
 function fearEvent(time){
-  if(!running||paused||phase!=='escape'||time<nextPresenceCueAt)return;
+  if(!running||paused||phase!=='escape'||isInCameraRoom(player)||time<nextPresenceCueAt)return;
   lastFearEvent=time;nextPresenceCueAt=time+6000+Math.random()*6000;flickerUntil=time+350+Math.random()*500;
   const eventRoll=Math.random();
   if(eventRoll<.34){
@@ -2280,7 +2384,7 @@ function fearEvent(time){
   if(time>=nextJumpScareAt&&Math.random()<(flashlight ? .2 : .34))triggerJumpScare(Math.random()<.5?'SOMETHING MOVED.':'DON’T MOVE.',false);
   draw();setTimeout(()=>{if(running)draw();},900);
 }
-function gameLoop(time){checkFlashlightDistraction();bossStep(time);const bossDistance=manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
+function gameLoop(time){checkFlashlightDistraction();bossStep(time);updateCameraRoomAlert(time);const bossDistance=isInCameraRoom(player)?99:manhattan(player,boss);updateSurpriseSound(bossDistance);updateDangerMusic(time,bossDistance);updateCloseBySound(bossDistance);fearEvent(time);requestAnimationFrame(gameLoop);}
 window.addEventListener('keydown',event=>{
   if(event.code==='ShiftLeft'||event.code==='ShiftRight')computerShiftHeld=true;
   if(document.querySelector('#storyModal').hidden===false){
